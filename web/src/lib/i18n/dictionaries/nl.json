@@ -105,7 +105,21 @@
     "submit": "Inloggen",
     "signingIn": "Inloggen\u2026",
     "error": "Onjuist e-mailadres of wachtwoord.",
-    "demoHint": "Demo-account: guest+demo@kicknap.com \u00B7 wachtwoord demo12345"
+    "demoHint": "Demo-account: guest+demo@kicknap.com \u00B7 wachtwoord demo12345",
+    "noAccount": "Nog geen account?",
+    "createOne": "Maak er een aan",
+    "registerTitle": "Maak je account aan",
+    "registerSubtitle": "Word lid van kicknap om ruimtes te boeken en je verblijven te beheren.",
+    "name": "Voor- en achternaam",
+    "signUp": "Account aanmaken",
+    "signingUp": "Aanmaken\u2026",
+    "genericError": "Er ging iets mis. Probeer het opnieuw.",
+    "invalidEmail": "Voer een geldig e-mailadres in.",
+    "weakPassword": "Wachtwoord moet minimaal 8 tekens bevatten.",
+    "emailTaken": "Dit e-mailadres is al geregistreerd. Log in.",
+    "missingName": "Voeg je naam toe.",
+    "alreadyAccount": "Al een account?",
+    "loginLink": "Log in"
   },
   "space": {
     "about": "Over deze ruimte",

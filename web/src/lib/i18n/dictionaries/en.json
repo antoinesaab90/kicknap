@@ -105,7 +105,21 @@
     "submit": "Log in",
     "signingIn": "Signing in\u2026",
     "error": "Incorrect email or password.",
-    "demoHint": "Demo account: guest+demo@kicknap.com \u00B7 password demo12345"
+    "demoHint": "Demo account: guest+demo@kicknap.com \u00B7 password demo12345",
+    "noAccount": "No account yet?",
+    "createOne": "Create one",
+    "registerTitle": "Create your account",
+    "registerSubtitle": "Join kicknap to book spaces and manage your stays.",
+    "name": "Full name",
+    "signUp": "Create account",
+    "signingUp": "Creating\u2026",
+    "genericError": "Something went wrong. Try again.",
+    "invalidEmail": "Enter a valid email address.",
+    "weakPassword": "Password must be at least 8 characters.",
+    "emailTaken": "That email is already registered. Log in instead.",
+    "missingName": "Please add your name.",
+    "alreadyAccount": "Already have an account?",
+    "loginLink": "Log in"
   },
   "space": {
     "about": "About this space",
