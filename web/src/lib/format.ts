@@ -1,0 +1,52 @@
+export function formatEuro(cents: number): string {
+  const value = cents / 100;
+  return `€${Number.isInteger(value) ? value : value.toFixed(2)}`;
+}
+
+const AMSTERDAM_TIME_ZONE = "Europe/Amsterdam";
+
+export function amsterdamOffsetMinutes(dateStr: string): number {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  const noonUtc = Date.UTC(y, m - 1, d, 12, 0, 0);
+  const fmt = new Intl.DateTimeFormat("en-US", {
+    timeZone: AMSTERDAM_TIME_ZONE,
+    hourCycle: "h23",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  const parts = fmt.formatToParts(new Date(noonUtc));
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? 0);
+  const hour = get("hour") % 24;
+  const asUtc = Date.UTC(get("year"), get("month") - 1, get("day"), hour, get("minute"), get("second"));
+  return Math.round((asUtc - noonUtc) / 60000);
+}
+
+export function amsterdamOffset(dateStr: string): string {
+  const diff = amsterdamOffsetMinutes(dateStr);
+  const sign = diff < 0 ? "-" : "+";
+  const abs = Math.abs(diff);
+  return `${sign}${String(Math.floor(abs / 60)).padStart(2, "0")}:${String(abs % 60).padStart(2, "0")}`;
+}
+
+export function localDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+export function formatDateTime(iso: string, lang: string): string {
+  const date = new Date(iso);
+  return new Intl.DateTimeFormat(lang === "nl" ? "nl-NL" : "en-GB", {
+    timeZone: AMSTERDAM_TIME_ZONE,
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}

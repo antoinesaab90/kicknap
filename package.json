@@ -7,13 +7,15 @@
     "services/*"
   ],
   "scripts": {
-    "dev": "concurrently -n web,listings,availability,bookings,identity -c blue,green,magenta,yellow,cyan \"npm run dev -w web\" \"npm run dev -w services/listings\" \"npm run dev -w services/availability\" \"npm run dev -w services/bookings\" \"npm run dev -w services/identity\"",
+    "dev": "concurrently -n web,listings,availability,bookings,identity,payments -c blue,green,magenta,yellow,cyan,red \"npm run dev -w web\" \"npm run dev -w services/listings\" \"npm run dev -w services/availability\" \"npm run dev -w services/bookings\" \"npm run dev -w services/identity\" \"npm run dev -w services/payments\"",
     "build": "npm run build -w web",
     "lint:arch": "depcruise -c .dependency-cruiser.mjs web/src services",
     "check": "npm run lint:arch && npm run lint -w web && npm run build -w web",
     "db:start": "node scripts/db-start.mjs",
-    "db:init": "npm run db:init -w services/listings && npm run db:init -w services/availability && npm run db:init -w services/bookings && npm run db:init -w services/identity",
-    "db:seed": "npm run db:seed -w services/listings && npm run db:seed -w services/availability && npm run db:seed -w services/bookings && npm run db:seed -w services/identity"
+    "db:init": "npm run db:init -w services/listings && npm run db:init -w services/availability && npm run db:init -w services/bookings && npm run db:init -w services/identity && npm run db:init -w services/payments",
+    "db:seed": "npm run db:seed -w services/listings && npm run db:seed -w services/availability && npm run db:seed -w services/bookings && npm run db:seed -w services/identity && npm run db:seed -w services/payments",
+    "deploy:prod": "node scripts/deploy-prod.mjs",
+    "smoke:prod": "node scripts/smoke-prod.mjs"
   },
   "devDependencies": {
     "concurrently": "^10.0.5",

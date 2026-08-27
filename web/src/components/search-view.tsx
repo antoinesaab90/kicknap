@@ -8,9 +8,11 @@ import type { SpaceDto } from "@/lib/types/space";
 export function SearchView({
   spaces,
   texts,
+  lang,
 }: {
   spaces: SpaceDto[];
   texts: { perHour: string; minHours: string; demoNote: string; map: string; list: string };
+  lang: string;
 }) {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [view, setView] = useState<"list" | "map">(() =>
@@ -56,7 +58,8 @@ export function SearchView({
               space={space}
               selected={space.id === selectedId}
               texts={texts}
-              onSelect={() => handleSelect(space.id)}
+              href={`/${lang}/spaces/${space.id}`}
+              onHover={() => handleSelect(space.id)}
             />
           ))}
         </div>

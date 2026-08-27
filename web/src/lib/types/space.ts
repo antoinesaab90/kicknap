@@ -13,7 +13,19 @@ export interface SpaceDto {
   isDemo: boolean;
 }
 
+export interface SpaceDetailDto extends SpaceDto {
+  description: string | null;
+  address: string | null;
+  maxHours: number;
+  published: boolean;
+  hostId: number;
+}
+
 export interface SpacesResponse {
   count: number;
   spaces: SpaceDto[];
+}
+
+export interface SpaceResponse {
+  space: SpaceDetailDto;
 }

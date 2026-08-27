@@ -1,27 +1,29 @@
+import Link from "next/link";
+import { formatEuro } from "@/lib/format";
 import type { SpaceDto } from "@/lib/types/space";
 
-export function formatEuro(cents: number): string {
-  const value = cents / 100;
-  return `€${Number.isInteger(value) ? value : value.toFixed(2)}`;
-}
+export { formatEuro };
 
 export function SpaceCard({
   space,
   selected,
   texts,
-  onSelect,
+  href,
+  onHover,
 }: {
   space: SpaceDto;
   selected: boolean;
   texts: { perHour: string; minHours: string; demoNote: string };
-  onSelect: () => void;
+  href: string;
+  onHover?: () => void;
 }) {
   return (
-    <button
-      type="button"
+    <Link
+      href={href}
       data-space-id={space.id}
-      onClick={onSelect}
-      className={`w-full rounded-3xl border bg-white p-3 text-left transition-all ${
+      onMouseEnter={onHover}
+      onFocus={onHover}
+      className={`block h-full w-full rounded-3xl border bg-white p-3 transition-all ${
         selected
           ? "border-gold-600 ring-2 ring-gold-600/40"
           : "border-navy-100 hover:border-navy-300"
@@ -64,6 +66,6 @@ export function SpaceCard({
           </span>
         </div>
       </div>
-    </button>
+    </Link>
   );
 }

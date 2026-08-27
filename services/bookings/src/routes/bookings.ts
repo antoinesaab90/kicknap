@@ -136,14 +136,18 @@ v1.get("/bookings/:id", async (c) => {
   return c.json({ booking });
 });
 
-// GET /api/v1/bookings?spaceId=1&from=...&to=...  (active bookings overlapping the window)
+// GET /api/v1/bookings?spaceId=1&from=...&to=...&guestEmail=...  (active bookings; filter by space, time window, or guest)
 v1.get("/bookings", async (c) => {
   const spaceId = Number(c.req.query("spaceId"));
   const from = c.req.query("from");
   const to = c.req.query("to");
+  const guestEmail = c.req.query("guestEmail");
 
   const conditions = [eq(bookings.status, ACTIVE_STATUS)];
   if (c.req.query("spaceId") !== undefined) conditions.push(eq(bookings.spaceId, spaceId));
+  if (typeof guestEmail === "string" && guestEmail) {
+    conditions.push(eq(bookings.guestEmail, guestEmail));
+  }
 
   const toMs = typeof to === "string" ? Date.parse(to) : Number.NaN;
   const fromMs = typeof from === "string" ? Date.parse(from) : Number.NaN;

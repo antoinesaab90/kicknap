@@ -2,6 +2,7 @@ import Link from "next/link";
 import { lang } from "next/root-params";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { SearchView } from "@/components/search-view";
+import { serviceBaseUrl } from "@/lib/api";
 import type { SpacesResponse } from "@/lib/types/space";
 
 const AREAS = ["centrum", "oost", "west", "zuid", "noord", "schiphol"] as const;
@@ -42,7 +43,7 @@ export default async function SearchPage({
   let spaces: SpacesResponse["spaces"] | null = null;
   let serviceError = false;
 
-  const listingsUrl = process.env.SERVICE_LISTINGS_URL ?? "http://localhost:3001";
+  const listingsUrl = serviceBaseUrl("listings");
   const query = new URLSearchParams();
   if (state.area) query.set("area", state.area);
   if (state.max) query.set("max", state.max);
@@ -161,7 +162,7 @@ export default async function SearchPage({
               <span className="font-semibold text-navy-900">{spaces.length}</span>{" "}
               {dict.search.results}
             </p>
-            <SearchView spaces={spaces} texts={texts} />
+            <SearchView spaces={spaces} texts={texts} lang={currentLang} />
           </>
         ) : null}
       </div>

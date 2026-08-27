@@ -307,14 +307,26 @@ GET /api/v1/listings?city=Amsterdam&space_type=bedroom&min_price=10&max_price=30
 
 ---
 
-## Implemented (microservices, one database `kicknap`, one schema per service)
+## Implemented (microservices, one database `neondb`, one schema per service)
 > The design above is the roadmap. These endpoints are live across the running services.
 
-| Service | Port | Health | Endpoints |
-|---------|------|--------|-----------|
-| `listings` | 3001 | `GET /health` | `GET /api/v1/spaces` (`?area&max&sort`), `GET /api/v1/spaces/:id` |
-| `availability` | 3002 | `GET /health` | `GET /api/v1/check?spaceId&from&to`, `GET /api/v1/spaces/:id/day?date` |
-| `bookings` | 3003 | `GET /health` | `POST /api/v1/bookings`, `GET /api/v1/bookings`, `GET /api/v1/bookings/:id` |
+| Service | Live URL | Health | Endpoints |
+|---------|----------|--------|-----------|
+| `listings` | `https://listings-hazel.vercel.app` | `GET /health` | `GET /api/v1/spaces` (`?area&max&sort`), `GET /api/v1/spaces/:id` |
+| `availability` | `https://availability-xi.vercel.app` | `GET /health` | `GET /api/v1/check?spaceId&from&to`, `GET /api/v1/spaces/:id/day?date` |
+| `bookings` | `https://bookings-sable-nine.vercel.app` | `GET /health` | `POST /api/v1/bookings`, `GET /api/v1/bookings` (`?spaceId&from&to&guestEmail`), `GET /api/v1/bookings/:id` |
+| `identity` | `https://identity-wheat-ten.vercel.app` | `GET /health` | `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `GET /api/v1/auth/me` (Bearer) |
+| `payments` | `https://payments-olive.vercel.app` | `GET /health` (reports `stripeConfigured`) | `POST /api/v1/payments/intents` (503 `stripe_not_configured` until keys set), `GET /api/v1/payments/bookings/:bookingId`, `POST /api/v1/payments/accounts` |
+| `web` | `https://www.kicknap.com` | — | Frontend + BFF route handlers under `/api/*` |
+
+### Web BFF endpoints (implemented)
+| Endpoint | Description |
+|----------|-------------|
+| `POST /api/auth/login` | Proxies identity login, sets httpOnly `kn_session` + `kn_user` cookies |
+| `GET /api/auth/me` | Returns session user from cookie (validates via identity) |
+| `GET/POST /api/auth/logout` | Clears session cookies (GET redirects to `?next=`) |
+| `GET /api/availability?spaceId&from&to` | Proxies availability check to the availability service |
+| `GET/POST /api/bookings` | Requires session; POSTs booking with the guest's identity, GET lists the session user's bookings (guestEmail filter) |
 
 ### Bookings service contract (implemented)
 - `POST /api/v1/bookings` body: `{ spaceId, from, to, guestEmail?, guestName? }` (ISO 8601 UTC).
