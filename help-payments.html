@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kicknap — Payments</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; color: #1a1a1a; background: #fff; line-height: 1.8; max-width: 800px; margin: 0 auto; padding: 60px 40px; }
+        h1 { font-size: 32px; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
+        .subtitle { font-size: 14px; color: #717171; margin-bottom: 40px; }
+        h2 { font-size: 20px; font-weight: 700; margin-top: 40px; margin-bottom: 16px; letter-spacing: -0.3px; }
+        h3 { font-size: 16px; font-weight: 700; margin-top: 28px; margin-bottom: 12px; }
+        p { margin-bottom: 14px; color: #333; font-size: 14px; }
+        ul, ol { margin: 12px 0 16px 24px; font-size: 14px; }
+        li { margin-bottom: 8px; color: #333; }
+        .section { margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid #f0f0f0; }
+        .footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid #eee; font-size: 12px; color: #999; }
+        a { color: #1a1a1a; }
+        strong { font-weight: 600; }
+        .back { display: inline-block; margin-bottom: 24px; font-size: 14px; color: #717171; text-decoration: none; }
+        .back:hover { color: #1a1a1a; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+        th { background: #f7f7f7; text-align: left; padding: 10px 14px; border: 1px solid #ddd; font-weight: 600; }
+        td { padding: 10px 14px; border: 1px solid #ddd; vertical-align: top; }
+    </style>
+</head>
+<body>
+
+<a href="help.html" class="back">&larr; Back to Help Center</a>
+
+<h1>Payments</h1>
+<p class="subtitle">How payments, fees, and payouts work on kicknap</p>
+
+<div class="section">
+<h2>For Guests</h2>
+
+<h3>How You Pay</h3>
+<ul>
+    <li>Payment is processed at the time of booking</li>
+    <li>You pay the Host's hourly rate, plus a kicknap service fee (5-10%)</li>
+    <li>A security deposit pre-authorization (€50-100) may be placed on your card</li>
+    <li>All payments are processed securely through Stripe</li>
+</ul>
+
+<h3>Accepted Payment Methods</h3>
+<ul>
+    <li>Credit cards (Visa, Mastercard, American Express)</li>
+    <li>Debit cards</li>
+    <li>Apple Pay and Google Pay (where available)</li>
+</ul>
+
+<h3>Security Deposit</h3>
+<p>A pre-authorization is placed on your card before the booking starts. This is not a charge — it's a temporary hold. The hold is released within 7 days of check-out if no damage is reported. If damage is reported, the pre-authorization may be charged.</p>
+</div>
+
+<div class="section">
+<h2>For Hosts</h2>
+
+<h3>How You Get Paid</h3>
+<table>
+    <tr><th>Step</th><th>What Happens</th></tr>
+    <tr><td>Guest books</td><td>Guest pays kicknap. Payment held in escrow.</td></tr>
+    <tr><td>Booking starts</td><td>Guest checks in. Payment remains in escrow.</td></tr>
+    <tr><td>End of business day after check-in</td><td>Payout processed. kicknap deducts 3% host service fee. Remaining amount sent to your bank account via Stripe Connect.</td></tr>
+</table>
+
+<h3>Payout Timeline</h3>
+<ul>
+    <li>Payouts are processed at the end of the business day after check-in</li>
+    <li>Funds typically arrive in your bank account within 1-2 business days after payout</li>
+    <li>Payouts are made in EUR (€)</li>
+</ul>
+
+<h3>Service Fee</h3>
+<p>kicknap deducts a 3% host service fee from each payout. This fee covers payment processing and platform costs. See our <a href="SERVICE_FEES.html">Service Fees Policy</a> for details.</p>
+</div>
+
+<div class="section">
+<h2>Fees Summary</h2>
+<table>
+    <tr><th>Fee Type</th><th>Amount</th><th>Who Pays</th></tr>
+    <tr><td>Guest service fee</td><td>5-10% of booking total</td><td>Guest</td></tr>
+    <tr><td>Host service fee</td><td>3% of payout</td><td>Host (deducted from payout)</td></tr>
+    <tr><td>Security deposit</td><td>€50-100 (pre-authorization)</td><td>Guest (released if no damage)</td></tr>
+    <tr><td>Account creation</td><td>Free</td><td>N/A</td></tr>
+    <tr><td>Listing creation</td><td>Free</td><td>N/A</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>Refunds</h2>
+<p>Refunds are handled according to our <a href="CANCELLATION_POLICY.html">Cancellation Policy</a>. If you are entitled to a refund:</p>
+<ul>
+    <li>Refunds are processed back to your original payment method</li>
+    <li>Refunds typically appear within 5-10 business days</li>
+    <li>The guest service fee is non-refundable in most cases (see Cancellation Policy)</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Security</h2>
+<ul>
+    <li>All payments are processed through Stripe (PCI DSS Level 1 certified)</li>
+    <li>kicknap never stores your full card details</li>
+    <li>All data is encrypted in transit and at rest</li>
+    <li>We comply with PSD2 (Payment Services Directive 2) requirements</li>
+</ul>
+</div>
+
+<!-- ============================================ -->
+<div class="footer">
+    <p><strong>kicknap</strong> — Call it home.<br>
+    Payments Help Guide v1.0 — August 2026<br>
+    Learnix · KvK 42119992 · Amsterdam, Netherlands<br>
+    <a href="help.html">Back to Help Center</a></p>
+</div>
+
+</body>
+</html>

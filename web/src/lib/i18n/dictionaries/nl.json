@@ -1,0 +1,106 @@
+{
+  "meta": {
+    "title": "kicknap \u2014 Een basis tussen bestemmingen",
+    "description": "kicknap is verhuur van ruimtes per uur in Amsterdam. Boek per uur een rustige kamer, studio of bureau. Geen hotel, geen overnachting \u2014 gewoon een paar uur om bij te tanken.",
+    "ogDescription": "Vind per uur een ruimte in Amsterdam, een rustige kamer, studio of bureau. Boek in minuten, betaal per uur."
+  },
+  "nav": {
+    "spaces": "Ruimtes",
+    "howItWorks": "Zo werkt het",
+    "login": "Inloggen",
+    "listYourSpace": "Verhuur je ruimte"
+  },
+  "hero": {
+    "eyebrow": "Noem het thuis.",
+    "title": "Een basis tussen bestemmingen",
+    "tagline": "Boek een ruimte per uur. Geen hotel, geen overnachting \u2014 gewoon een paar uur om rustig bij te tanken.",
+    "search": {
+      "where": "Waar? Amsterdam, Nederland",
+      "when": "Wanneer? Vandaag",
+      "howLong": "Hoe lang? 3 uur",
+      "button": "Zoeken"
+    }
+  },
+  "how": {
+    "title": "Zo werkt het",
+    "steps": [
+      {
+        "title": "Zoeken",
+        "text": "Vind een ruimte bij jou in de buurt \u2014 appartementen, studio's, priv\u00E9kamers."
+      },
+      {
+        "title": "Boeken",
+        "text": "Reserveer per uur. Een uur, drie uur, een halve dag \u2014 jij kiest."
+      },
+      {
+        "title": "Kicknap",
+        "text": "Check in, deur dicht, rust. Klaar. Weer verder met je dag."
+      }
+    ]
+  },
+  "testimonial": {
+    "quote": "\u201CIk had een tussenstop van zes uur op Schiphol. Ik boekte een kicknap vlak bij het Centraal Station. Douchen, dutje, frisse kleren. Beste reisbeslissing ooit.\u201D",
+    "author": "\u2014 Lisa, Berlijn"
+  },
+  "cities": {
+    "title": "Waar we zijn",
+    "subtitle": "We lanceren in Amsterdam \u2014 de drukste aankomsthal van Europa.",
+    "cities": [
+      {
+        "name": "Amsterdam",
+        "note": "Binnenkort beschikbaar"
+      },
+      {
+        "name": "Meer steden",
+        "note": "Binnenkort"
+      }
+    ]
+  },
+  "host": {
+    "title": "Verhuur je ruimte",
+    "text": "Een kamer die je overdag niet gebruikt? Verdien geld terwijl je werkt \u2014 geen enkele verandering in je leven.",
+    "cta": "Word host"
+  },
+  "search": {
+    "title": "Ruimtes per uur in Amsterdam",
+    "subtitle": "Kies een plek, stel je budget in, vind je basis.",
+    "area": "Gebied",
+    "maxPrice": "Max prijs / uur",
+    "sort": "Sorteren",
+    "anyPrice": "Elke prijs",
+    "price10": "€10",
+    "price15": "€15",
+    "price20": "€20",
+    "sortPriceAsc": "Laagste prijs",
+    "sortPriceDesc": "Hoogste prijs",
+    "sortRating": "Best beoordeeld",
+    "results": "ruimtes gevonden",
+    "resultsNone": "ruimtes gevonden",
+    "perHour": "/u",
+    "map": "Kaart",
+    "list": "Lijst",
+    "demoNote": "Voorbeeldruimte — alleen ter preview",
+    "emptyTitle": "Geen ruimtes die passen",
+    "emptyText": "Probeer een groter gebied of verhoog je budget.",
+    "clearFilters": "Filters wissen",
+    "searchDown": "Zoeken start op — probeer over een paar seconden opnieuw.",
+    "minHours": "min",
+    "neighborhoods": {
+      "all": "Heel Amsterdam",
+      "centrum": "Centrum",
+      "oost": "Oost",
+      "west": "West",
+      "zuid": "Zuid",
+      "noord": "Noord",
+      "schiphol": "Schiphol-omgeving"
+    }
+  },
+  "footer": {
+    "product": "Product",
+    "support": "Support",
+    "helpCenter": "Helpcentrum",
+    "contact": "Contact",
+    "safety": "Veiligheid",
+    "legal": "\u00A9 2026 kicknap \u2014 Learnix \u00B7 KvK 42119992 \u00B7 Amsterdam, Nederland"
+  }
+}

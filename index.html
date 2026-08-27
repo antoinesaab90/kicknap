@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>kicknap — A base between destinations</title>
+
+    <meta name="description" content="kicknap is an hourly space rental platform in Amsterdam. Find a desk, meeting room, studio, or quiet space by the hour. Book in 2 minutes.">
+    <meta name="keywords" content="hourly rental, coworking, meeting room, desk rental, Amsterdam, space rental, kicknap">
+    <meta name="author" content="Learnix">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://kicknap.com">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://kicknap.com">
+    <meta property="og:title" content="kicknap — A base between destinations">
+    <meta property="og:description" content="Hourly space rental in Amsterdam. Find a desk, meeting room, studio, or quiet space. Book in 2 minutes.">
+    <meta property="og:image" content="https://kicknap.com/og-image.png">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:site_name" content="kicknap">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="kicknap — A base between destinations">
+    <meta name="twitter:description" content="Hourly space rental in Amsterdam. Find a desk, meeting room, studio, or quiet space. Book in 2 minutes.">
+    <meta name="twitter:image" content="https://kicknap.com/og-image.png">
+
+    <!-- Theme color -->
+    <meta name="theme-color" content="#1D263B">
+    <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #222;
+            background: #fff;
+            line-height: 1.6;
+        }
+
+        /* NAV */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 60px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .logo-wrap {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo-img {
+            height: 56px;
+            width: auto;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #222;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            opacity: 0.6;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-right a {
+            text-decoration: none;
+            color: #222;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .btn-host {
+            background: #222;
+            color: #fff !important;
+            padding: 10px 20px;
+            border-radius: 24px;
+            font-size: 14px;
+        }
+
+        .btn-host:hover {
+            opacity: 0.8;
+        }
+
+        /* HERO */
+        .hero {
+            text-align: center;
+            padding: 100px 20px 80px;
+        }
+
+        .hero h1 {
+            font-size: 52px;
+            font-weight: 700;
+            letter-spacing: -2px;
+            margin-bottom: 16px;
+        }
+
+        .hero p {
+            font-size: 18px;
+            color: #717171;
+            margin-bottom: 40px;
+        }
+
+        /* SEARCH BAR */
+        .search-bar {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            max-width: 700px;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            border-radius: 40px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 18px 24px;
+            border: none;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            background: #fff;
+        }
+
+        .search-bar input::placeholder {
+            color: #999;
+        }
+
+        .search-bar .divider {
+            width: 1px;
+            background: #eee;
+            margin: 12px 0;
+        }
+
+        .search-bar button {
+            background: #222;
+            color: #fff;
+            border: none;
+            padding: 18px 32px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+        }
+
+        .search-bar button:hover {
+            opacity: 0.85;
+        }
+
+        /* HOW IT WORKS */
+        .how-it-works {
+            padding: 80px 60px;
+            text-align: center;
+        }
+
+        .how-it-works h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 60px;
+            letter-spacing: -1px;
+        }
+
+        .steps {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+        }
+
+        .step {
+            flex: 1;
+            max-width: 280px;
+        }
+
+        .step-number {
+            width: 48px;
+            height: 48px;
+            background: #f7f7f7;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0 auto 20px;
+        }
+
+        .step h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .step p {
+            font-size: 14px;
+            color: #717171;
+        }
+
+        /* TESTIMONIAL */
+        .testimonial {
+            background: #f7f7f7;
+            padding: 80px 60px;
+            text-align: center;
+        }
+
+        .testimonial-card {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 16px;
+        }
+
+        .testimonial-card p {
+            font-size: 18px;
+            font-style: italic;
+            color: #333;
+            margin-bottom: 20px;
+            line-height: 1.7;
+        }
+
+        .testimonial-card .author {
+            font-size: 14px;
+            color: #999;
+            font-style: normal;
+        }
+
+        /* CITIES */
+        .cities {
+            padding: 80px 60px;
+            text-align: center;
+        }
+
+        .cities h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 40px;
+            letter-spacing: -1px;
+        }
+
+        .cities-grid {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+        }
+
+        .city-card {
+            width: 260px;
+            height: 180px;
+            background: #eee;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 20px;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .city-card h3 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+            position: relative;
+            z-index: 1;
+        }
+
+        .city-card .count {
+            font-size: 14px;
+            color: rgba(255,255,255,0.8);
+            position: relative;
+            z-index: 1;
+        }
+
+        .city-card::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60%;
+            background: linear-gradient(transparent, rgba(0,0,0,0.6));
+        }
+
+        .city-card:nth-child(1) { background: #1a1a2e; }
+        .city-card:nth-child(2) { background: #16213e; }
+        .city-card:nth-child(3) { background: #0f3460; }
+        .city-card:nth-child(4) { background: #533483; }
+
+        /* HOST CTA */
+        .host-cta {
+            padding: 80px 60px;
+            text-align: center;
+            background: #f7f7f7;
+        }
+
+        .host-cta h2 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            letter-spacing: -1px;
+        }
+
+        .host-cta p {
+            font-size: 16px;
+            color: #717171;
+            margin-bottom: 32px;
+        }
+
+        .host-cta .btn-primary {
+            display: inline-block;
+            background: #222;
+            color: #fff;
+            padding: 14px 32px;
+            border-radius: 24px;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .host-cta .btn-primary:hover {
+            opacity: 0.85;
+        }
+
+        /* FOOTER */
+        footer {
+            padding: 60px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 40px;
+        }
+
+        .footer-brand .logo-img {
+            height: 40px;
+            margin-bottom: 8px;
+        }
+
+        .footer-brand p {
+            font-size: 14px;
+            color: #999;
+        }
+
+        .footer-col h4 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .footer-col ul {
+            list-style: none;
+        }
+
+        .footer-col ul li {
+            margin-bottom: 8px;
+        }
+
+        .footer-col ul li a {
+            text-decoration: none;
+            color: #717171;
+            font-size: 14px;
+        }
+
+        .footer-col ul li a:hover {
+            color: #222;
+        }
+
+        .footer-bottom {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #f0f0f0;
+            font-size: 13px;
+            color: #999;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            nav {
+                padding: 16px 20px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .search-bar {
+                flex-direction: column;
+                border-radius: 16px;
+            }
+
+            .search-bar .divider {
+                width: 100%;
+                height: 1px;
+                margin: 0;
+            }
+
+            .steps {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .cities-grid {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav>
+        <div class="logo-wrap">
+                <img src="kicknap logo.jpg" alt="kicknap" class="logo-img">
+        </div>
+        <ul class="nav-links">
+            <li><a href="#">Spaces</a></li>
+            <li><a href="#">How it works</a></li>
+            <li><a href="#">Cities</a></li>
+        </ul>
+        <div class="nav-right">
+            <a href="#">Login</a>
+            <a href="#" class="btn-host">List your space</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <h1>Your base between destinations</h1>
+        <p>Book a space by the hour. Not a hotel. Not overnight. Just a few hours to kicknap.</p>
+
+        <div class="search-bar">
+            <input type="text" placeholder="Where? Amsterdam, Netherlands">
+            <div class="divider"></div>
+            <input type="text" placeholder="When? Today">
+            <div class="divider"></div>
+            <input type="text" placeholder="How long? 3 hours">
+            <button>Search</button>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="how-it-works">
+        <h2>How it works</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Search</h3>
+                <p>Find a space near you — apartments, studios, private rooms, all verified.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>Book</h3>
+                <p>Reserve by the hour. One hour, three, half day — you choose.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Kicknap</h3>
+                <p>Check in, close the door, rest. Done. Back to your day.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIAL -->
+    <section class="testimonial">
+        <div class="testimonial-card">
+            <p>"I had a 6-hour layover at Schiphol. Booked a kicknap near Centraal. Shower, nap, fresh clothes. Best travel decision I ever made."</p>
+            <div class="author">— Lisa, Berlin</div>
+        </div>
+    </section>
+
+    <!-- CITIES -->
+    <section class="cities">
+        <h2>Popular cities</h2>
+        <div class="cities-grid">
+            <div class="city-card">
+                <h3>Amsterdam</h3>
+                <span class="count">42 spaces</span>
+            </div>
+            <div class="city-card">
+                <h3>Rotterdam</h3>
+                <span class="count">18 spaces</span>
+            </div>
+            <div class="city-card">
+                <h3>Paris</h3>
+                <span class="count">96 spaces</span>
+            </div>
+            <div class="city-card">
+                <h3>Berlin</h3>
+                <span class="count">54 spaces</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOST CTA -->
+    <section class="host-cta">
+        <h2>List your space</h2>
+        <p>Got a room you're not using? Earn money while you're away.</p>
+        <a href="#" class="btn-primary">Become a host</a>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-brand">
+            <img src="kicknap logo.jpg" alt="kicknap" class="logo-img">
+                <p>Your base between destinations.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Product</h4>
+                <ul>
+                    <li><a href="#">Spaces</a></li>
+                    <li><a href="#">How it works</a></li>
+                    <li><a href="#">Host a space</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="#">About</a></li>
+                    <li><a href="#">Careers</a></li>
+                    <li><a href="#">Press</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="#">Help center</a></li>
+                    <li><a href="#">Contact</a></li>
+                    <li><a href="#">Safety</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            © 2026 kicknap — Learnix · KvK 42119992 · Amsterdam, Netherlands
+        </div>
+    </footer>
+
+</body>
+</html>

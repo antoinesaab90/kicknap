@@ -1,0 +1,106 @@
+{
+  "meta": {
+    "title": "kicknap — A base between destinations",
+    "description": "kicknap is hourly space rental in Amsterdam. Book a quiet room, studio or desk by the hour. Not a hotel, not overnight — just a few hours to kicknap.",
+    "ogDescription": "Find a space by the hour in Amsterdam — a quiet room, studio or desk. Book in minutes, pay by the hour."
+  },
+  "nav": {
+    "spaces": "Spaces",
+    "howItWorks": "How it works",
+    "login": "Log in",
+    "listYourSpace": "List your space"
+  },
+  "hero": {
+    "eyebrow": "Call it home.",
+    "title": "A base between destinations",
+    "tagline": "Book a space by the hour. Not a hotel, not overnight — just a few hours to kicknap.",
+    "search": {
+      "where": "Where? Amsterdam, Netherlands",
+      "when": "When? Today",
+      "howLong": "How long? 3 hours",
+      "button": "Search"
+    }
+  },
+  "how": {
+    "title": "How it works",
+    "steps": [
+      {
+        "title": "Search",
+        "text": "Find a space near you — apartments, studios, private rooms."
+      },
+      {
+        "title": "Book",
+        "text": "Reserve by the hour. One hour, three, half a day — you choose."
+      },
+      {
+        "title": "Kicknap",
+        "text": "Check in, close the door, rest. Then back to your day."
+      }
+    ]
+  },
+  "testimonial": {
+    "quote": "\u201CI had a 6-hour layover at Schiphol. Booked a kicknap near Centraal. Shower, nap, fresh clothes. Best travel decision I ever made.\u201D",
+    "author": "\u2014 Lisa, Berlin"
+  },
+  "cities": {
+    "title": "Where we are",
+    "subtitle": "We're launching in Amsterdam \u2014 the busiest arrival hub in Europe.",
+    "cities": [
+      {
+        "name": "Amsterdam",
+        "note": "Launching soon"
+      },
+      {
+        "name": "More cities",
+        "note": "Coming next"
+      }
+    ]
+  },
+  "host": {
+    "title": "List your space",
+    "text": "Got a room you're not using during the day? Earn money while you're at work \u2014 zero lifestyle change.",
+    "cta": "Become a host"
+  },
+  "search": {
+    "title": "Hourly spaces in Amsterdam",
+    "subtitle": "Pick a spot, set your budget, find your base.",
+    "area": "Area",
+    "maxPrice": "Max price / hour",
+    "sort": "Sort",
+    "anyPrice": "Any price",
+    "price10": "€10",
+    "price15": "€15",
+    "price20": "€20",
+    "sortPriceAsc": "Lowest price",
+    "sortPriceDesc": "Highest price",
+    "sortRating": "Top rated",
+    "results": "spaces found",
+    "resultsNone": "spaces found",
+    "perHour": "/hr",
+    "map": "Map",
+    "list": "List",
+    "demoNote": "Example space — preview only",
+    "emptyTitle": "Nothing matches these filters",
+    "emptyText": "Try widening the area or raising your budget.",
+    "clearFilters": "Clear filters",
+    "searchDown": "Search is warming up — try again in a few seconds.",
+    "minHours": "min",
+    "neighborhoods": {
+      "all": "All of Amsterdam",
+      "centrum": "Centrum",
+      "oost": "Oost",
+      "west": "West",
+      "zuid": "Zuid",
+      "noord": "Noord",
+      "schiphol": "Schiphol area"
+    }
+  },
+  "footer": {
+    "product": "Product",
+    "support": "Support",
+    "helpCenter": "Help center",
+    "contact": "Contact",
+    "safety": "Safety",
+    "legal": "\u00A9 2026 kicknap \u2014 Learnix \u00B7 KvK 42119992 \u00B7 Amsterdam, Netherlands"
+  }
+}
