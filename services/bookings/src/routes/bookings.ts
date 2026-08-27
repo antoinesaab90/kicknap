@@ -4,7 +4,6 @@ import { bookings } from "../db/schema.js";
 import { db } from "../db/index.js";
 import { fetchSpace } from "../lib/listings.js";
 import { checkAvailability } from "../lib/availability.js";
-import { intervalsOverlap } from "../lib/time.js";
 import { computePriceCents } from "../lib/price.js";
 
 const v1 = new Hono();
@@ -62,7 +61,7 @@ v1.post("/bookings", async (c) => {
     body = parseBody(await c.req.json());
   } catch (err) {
     const e = err as { status?: number; error?: string };
-    return c.json({ error: e.error ?? "invalid_body" }, e.status ?? 400);
+    return c.json({ error: e.error ?? "invalid_body" }, (e.status ?? 400) as 400);
   }
 
   const fromMs = Date.parse(body.from);

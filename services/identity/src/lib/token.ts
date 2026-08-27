@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
-const SECRET = process.env.JWT_SECRET;
+const SECRET = process.env.JWT_SECRET ?? "";
 
 if (!SECRET) {
   throw new Error("JWT_SECRET is not set — add it to .env");
