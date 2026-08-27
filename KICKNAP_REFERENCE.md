@@ -39,14 +39,14 @@
 - 500 spaces by Month 12
 
 ## Tech Stack
-- **Web:** React / Next.js
+- **Web:** React / Next.js 16.3.3 (App Router + Turbopack, React 19) — **live**
 - **App later:** React Native
-- **API:** Node.js or Python
-- **Database:** PostgreSQL
-- **Payments:** Stripe Connect
-- **Hosting:** Railway / Vercel
-- **CDN:** Cloudflare
-- **Email:** Zoho Mail (free tier, pending setup)
+- **API:** Hono (TypeScript) microservices — **live**
+- **Database:** PostgreSQL on Neon (`neondb`, eu-central-1), Drizzle ORM 0.45.2 + postgres-js — **live**
+- **Payments:** Stripe Connect (scaffold built, keys needed)
+- **Hosting:** Vercel (web iad1, services fra1) — **live**
+- **Repo:** https://github.com/antoinesaab90/kicknap (public, branch `main`) — **live**
+- **Local dev:** Next.js 16.3.3 docs ONLY at `web\node_modules\next\dist\docs\` (breaking changes vs. older Next — `lang()`/`cookies()` async, `params` Promises, `proxy.ts` middleware). `proxy.ts` matcher excludes `/api/*`.
 
 ## Architecture Principles
 1. **Modular/microservice** — If one service fails, the whole platform doesn't crash
@@ -172,6 +172,12 @@ All files at: `C:\Users\antoi\Documents\Default Project\kicknap\`
 - **Session 4:** KvK number added to all footers, favicon created, social media handles reserved, SEO meta tags added
 - **Session 5:** Pricing engine (scraper, calculation, advisor, notifications), booking variations (Instant Book vs Request to Book), notification preferences, database schema (21 tables), API endpoints (70+)
 - **Session 6:** Production architecture (9 bubble microservices), scaling strategy (4 tiers), environment strategy (local/dev/staging/production), CI/CD pipeline (5 stages), fault tolerance design
+- **Session 7:** Monorepo scaffold + Phase 1 microservices (Hono, Drizzle, Neon). Stack decisions locked.
+- **Session 8:** Per-service schema + seed scripts (12 demo spaces, opening hours, demo booking), bookings + identity services, local full-stack verification
+- **Session 9:** Web app: "Sector" landing, EN/NL i18n, search view + space cards, CORS enforcement, SEO/sitemap.xml
+- **Session 10:** Next.js 16.3.3 migration; deployed web + listings/availability/bookings/identity to Vercel production; kicknap.com domain attached
+- **Session 11:** Booking flow end-to-end (space detail + booking widget, availability + price, auth login/logout), payments service scaffold (Stripe), infra tooling (`deploy:prod`, `smoke:prod`), drizzle-orm 0.44→0.45.2 security patch
+- **Session 12:** Final checks, redeploy of all 6 apps (drizzle 0.45.2), smoke 15/15, `git commit 2d6f80c` + push, **self-service registration** (`/register`, BFF route), live verification, `git commit 020c6fe` + push
 
 ## Production Architecture
 - **9 services (bubbles):** Auth, Listing, Booking, Payment, Pricing, Notification, Search, Review, Admin
@@ -209,6 +215,70 @@ All files at: `C:\Users\antoi\Documents\Default Project\kicknap\`
 - Health check endpoints for each service
 - Rate limiting configured per endpoint
 - See `API_ENDPOINTS.md` for full API design
+
+## 1. Implemented Production System (LIVE)
+
+> What actually runs today. All deployed to Vercel, branch `main`. Verified by `npm run smoke:prod` (15/15 pass).
+
+### Live URLs
+| App | Production URL | Alias | Notes |
+|-----|----------------|-------|-------|
+| web | `web-*-kicknap.vercel.app` | **www.kicknap.com** | Next.js 16.3.3, iad1 |
+| listings | `listings-*-kicknap.vercel.app` | `listings-hazel.vercel.app` | Hono, fra1 |
+| availability | `availability-*-kicknap.vercel.app` | `availability-xi.vercel.app` | Hono, fra1 |
+| bookings | `bookings-*-kicknap.vercel.app` | `bookings-sable-nine.vercel.app` | Hono, fra1 |
+| identity | `identity-*-kicknap.vercel.app` | `identity-wheat-ten.vercel.app` | Hono, fra1 |
+| payments | `payments-*-kicknap.vercel.app` | `payments-olive.vercel.app` | Hono, fra1; `/health` reports `stripeConfigured` |
+
+### Web routes
+- Pages (BFF-proxied, `/[lang]` = `en`/`nl`): `/` (landing), `/[lang]` — `search`, `spaces/[id]`, `login`, `register`, `bookings`; `/sitemap.xml`
+- Route handlers (BFF): `GET /api/auth/me`, `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/logout`, `GET /api/availability`, `GET+POST /api/bookings`
+- Auth = httpOnly cookie `kn_session` (+ display cookie `kn_user`). Register/login auto-login. Logout redirects via `?next=`.
+- Server services expose `/api/v1/...`; each has `/health` → `{ok:true,service}`.
+
+### Database (single Neon `neondb`, eu-central-1)
+- One Postgres, per-service schemas (drizzle `pgSchema`): `identity.*` (users), `listings.*` (spaces, opening_hours), `availability.*`, `bookings.*` (bookings), `payments.*` (payments table)
+- Reaching prod DB from a local script: **pass `DATABASE_URL` explicitly** (e.g. `env:DATABASE_URL = "postgresql://neondb_owner:***@ep-purple-frog-b15k5ftd.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require"`) — the services' own `.env` files point at a **localhost Postgres (dev only)** and silently hit the wrong DB.
+- Seed state: 12 demo spaces (ids 13–24), 84 opening-hour rows, 1 demo booking (space 21, 2026-08-28 08:00–10:00Z, €15.60, id 2), 2 demo users. Demo accounts: `guest+demo@kicknap.com` / `host+demo@kicknap.com`, password `demo12345` (public demo creds — shown on the login page).
+
+### Key flows (verified live)
+1. Register / Login → `kn_session` cookie → `/api/auth/me`
+2. Space detail → availability check (`available` | `outside_opening_hours` | `no_opening_hours` | `shorter_than_min` | `longer_than_max` | `space_not_found`) → ≈price (10% guest / 3% host fees)
+3. Instant booking → 201; overlapping slot → 409 `slot_conflict`; "My bookings" via `?guestEmail=` filter
+4. Payments scaffold: `POST /api/v1/payments/intents` → 503 `stripe_not_configured` until Stripe keys set (guarded, correct behavior)
+
+### Operations
+- Dev: `npm run dev` (root — all 5 services + web). Env: `npm run db:init`, `npm run db:seed`
+- Checks: `npm run check` (root) = dependency-cruiser + `eslint` + `next build` (gate before commit)
+- Deploy all: `npm run deploy:prod` → `node scripts/deploy-prod.mjs` (listings → availability → bookings → identity → payments → web)
+- Verify all: `npm run smoke:prod` → `node scripts/smoke-prod.mjs` (15 HTTP checks, ENDPOINTS map at top)
+- `vercel.cmd deploy --prod --cwd <dir>` for one-off deploys
+- Gateway of deploys: dependency-cruiser (`npm run lint:arch`), currently ~114 modules / 200+ deps, no violations
+
+### Windows PowerShell 5.1 gotchas (read before running anything)
+- Prepend PATH: `$env:Path = "$env:ProgramFiles\nodejs;$env:APPDATA\npm;$env:Path"`; use `npm.cmd`/`npx.cmd`/`vercel.cmd`
+- ALWAYS set the bash tool `workdir` to the repo root `C:\Users\antoi\Documents\Default Project\kicknap` (or subdir); `--cwd services/...` fails ENOENT without it
+- `curl.exe -d '{"json"}'` **mangles inline JSON** (double quotes stripped → services return `invalid_body`): write the body to a temp file and send `--data-binary "@body.json"`
+- `Set-Content` writes a **UTF-8 BOM** → breaks `package.json` for Vercel CLI (`Unexpected token in JSON`). Use `[IO.File]::WriteAllText` with `UTF8Encoding($false)` for JSON files
+- `git.exe` lives at `C:\Program Files\Git\cmd` (not on PATH)
+- Temp scratch dir: `C:\Users\antoi\AppData\Local\Temp\opencode`
+
+### Vercel quirks
+- Linking + env: `vercel.cmd link --yes --cwd services/<x>` FIRST, then `'value' | vercel.cmd env add <NAME> production --cwd services/<x> --force`
+- `vercel project add` creates Framework Preset = **Other** → Hono zero-config not wired (404). Fix: `vercel project update <name> --framework hono --yes`, redeploy. (Original 4 services were auto-detected on first deploy.)
+- All services `vercel.json`: `{"regions":["fra1"]}`
+
+## 2. Pending Work (next sessions)
+
+### Blocked on user (do first, they unlock me)
+- **Payments live:** add `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_CONNECT_CLIENT_ID` to the `payments` Vercel project envs (production). Then: wire Stripe Elements into the booking widget, `payment_intent.succeeded` webhook → confirm booking, refunds/deposits.
+- **Git auto-deploy (optional):** user accepts GitHub↔Vercel integration per project (dashboard → Settings → Git → Connect). All 6 projects are separate.
+
+### Autonomous next steps
+1. Hosts: Connect onboarding (`/payments/accounts`), host dashboard, listing creation UI (needs listings service CRUD write path)
+2. Search depth: availability-aware search (hide booked slots) + wire home hero search box
+3. Registration polish: email verification (later), profile page
+4. (Optional) Notification service (bubble 6) — email confirmations
 
 ---
 *Last updated: August 2026*

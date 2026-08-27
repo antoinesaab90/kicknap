@@ -448,4 +448,64 @@ Full audit conducted across all 10 core legal documents using subagent.
 
 ---
 
+## SESSIONS 7–11: Platform Build & Deployment (summary)
+
+Between planning (Session 6) and today, the platform was actually coded and shipped. Key points:
+
+- **Session 7 — Monorepo scaffold:** `kicknap/` monorepo (web + `services/`), Hono + Drizzle + Neon locked; Phase 1 endpoints for listings & availability.
+- **Session 8 — Data layer:** per-service schema + seed script (node, not SQL), 12 demo spaces (ids 13–24), 84 opening-hour rows, demo booking (space 21, 2026-08-28 08:00–10:00Z, €15.60), bookings + identity services built, local full-stack verified.
+- **Session 9 — Web app:** "Sector" landing page, EN/NL i18n via app router, search view + space cards, CORS enforcement, SEO + `/sitemap.xml` with `/[lang]` meta.
+- **Session 10 — Migration + first prod deploy:** Next.js 16.3.3 port (breaking `lang()`/`cookies()`/`params` async APIs, `proxy.ts` middleware), all 4 original services + web deployed to Vercel production, kicknap.com domain attached.
+- **Session 11 — Booking flow + payments + infra:** space detail page + booking widget (availability, price estimate, instant book), login/logout with httpOnly `kn_session`, My bookings (bookings service `guestEmail` filter), payments service scaffold (Stripe Connect intents/accounts, fee math 10%/3%, lazy guard), `scripts/deploy-prod.mjs` + `scripts/smoke-prod.mjs`, `API_ENDPOINTS.md` live URLs, drizzle-orm patched 0.44.0 → 0.45.2 across all 5 services (SQL-injection advisory).
+
+---
+
+## SESSION 12: Final Production Gates + Self-Service Registration
+
+### Context
+User returned wanting progress. The booking flow + payments scaffold + infra tooling were done but nothing was committed, production still ran the old drizzle, and registration didn't exist yet.
+
+### Full check gate passed
+- `npm run check` (root): dependency-cruiser 134 modules / 191 deps no violations; eslint clean; `next build` green with 16 routes + Proxy intact.
+
+### Production deploy — two caught bugs
+1. **UTF-8 BOM breakage:** the drizzle-orm bump had been written with PowerShell `Set-Content`, injecting a BOM into all 5 service `package.json`s → Vercel CLI failed every service deploy (`Unexpected token '﻿'`). Fixed with `[IO.File]::WriteAllText` + `UTF8Encoding($false)`; all 5 JSON re-validated; drizzle `^0.45.2` confirmed in each.
+2. Redeployed listings → availability → bookings → identity → payments → web. All aliases live, web shows 19 routes (register included after).
+
+### Smoke + audit
+- `npm run smoke:prod` → **15 passed, 0 failed** (services health, 12 spaces, availability true, 1 booking, 401 unauthenticated, payments `stripeConfigured:false`, web page checks).
+- `npm audit` → **0 vulnerabilities** post patch.
+
+### Commit + push (first time for this code)
+- `git` not on PATH → used `C:\Program Files\Git\cmd`. Staged everything; verified `.env.local`/`.vercel` correctly ignored in `services/payments` (its `.gitignore`).
+- Commit `2d6f80c` "Booking flow end-to-end on web + payments service scaffold" (45 files, +2119/−246). Pushed `a4bdce4..2d6f80c` to `main`.
+
+### Self-service registration (new feature)
+- `web/src/app/api/auth/register/route.ts` — BFF POST → identity `/auth/register`, sets `kn_session` on 201.
+- `web/src/components/register-form.tsx` — client form with inline error mapping (`invalid_email`, `weak_password`, `email_taken`, `missing_name`).
+- `web/src/app/[lang]/register/page.tsx` + cross-links on login page (both directions) — login page now shows "No account yet? Create one", register shows "Already have an account? Log in".
+- EN + NL dictionaries extended with 13 auth keys.
+- Build green (19 routes incl. `/register` + `/api/auth/register`).
+
+### Live verification (production)
+Used the PowerShell curl **body-file** workaround (PS mangles inline JSON):
+- Register `probe+register@kicknap.com` → **201** + `{user:{id:5}}`, session cookie set
+- `/api/auth/me` → 200 with the new user
+- Duplicate register → **409** `email_taken`
+- Register page HTML → 200, "Create your account" + login cross-link present
+- Probe cleanup → login 401 `invalid_credentials` after delete
+
+### Database lesson surfaced
+Services' local `.env` files point at a **localhost Postgres (dev only)** — the deployed services use the Neon `DATABASE_URL` from Vercel envs. My first cleanup attempt connected to localhost and deleted 0 rows; reran against the canonical Neon URL (`ep-purple-frog-b15k5ftd...neondb?sslmode=require`) → probe id 5 deleted, 2 demo users remain. **Any local script touching prod data must set `DATABASE_URL` explicitly to Neon.**
+
+### Second commit + a fix
+- A leftover temp file (`services/identity/.tmp-register-cleanup.mjs`) was accidentally staged → removed via `git rm --cached` + working-file deletion, then **amended** the unpublished commit.
+- Commit `020c6fe` "Add self-service registration (guest accounts)" (6 files, +274/−2). Pushed `2d6f80c..020c6fe`.
+
+### End state
+- **Live:** register, login, space detail + booking widget, my bookings, search — all on www.kicknap.com, 15/15 smoke green, 0 vulnerabilities.
+- **Parked for tomorrow:** payments on-ramp (needs user's Stripe keys in `payments` Vercel project), host path (Connect onboarding + dashboard + listing creation), search depth (availability-aware + hero search). Optional: git auto-deploy via dashboard.
+
+---
+
 *Last updated: August 2026*
