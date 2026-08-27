@@ -11,3 +11,5 @@ app.get("/health", (c) => c.json({ ok: true, service: "bookings" }));
 app.use("/api/v1/*", cors());
 
 app.route("/api/v1", v1);
+
+export default app;
