@@ -5,6 +5,7 @@ import { db } from "../db/index.js";
 import { fetchSpace } from "../lib/listings.js";
 import { checkAvailability } from "../lib/availability.js";
 import { computePriceCents } from "../lib/price.js";
+import { notifyBookingCreated } from "../lib/mail.js";
 
 const v1 = new Hono();
 
@@ -112,6 +113,18 @@ v1.post("/bookings", async (c) => {
   };
 
   const [booking] = await db.insert(bookings).values(row).returning();
+
+  void notifyBookingCreated({
+    guestEmail: body.guestEmail ?? "",
+    guestName: body.guestName,
+    hostEmail: space.hostEmail ?? undefined,
+    spaceName: space.name,
+    neighborhood: space.neighborhood,
+    city: space.city ?? "Amsterdam",
+    fromIso: new Date(fromMs).toISOString(),
+    toIso: new Date(toMs).toISOString(),
+    priceCents,
+  });
 
   return c.json(
     {

@@ -2,6 +2,8 @@ export interface ListingSpace {
   id: number;
   name: string;
   neighborhood: string;
+  city: string | null;
+  hostEmail: string | null;
   hourlyPriceCents: number;
   minHours: number;
   maxHours: number;

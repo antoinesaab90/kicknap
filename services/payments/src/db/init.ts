@@ -27,6 +27,17 @@ CREATE TABLE IF NOT EXISTS payments.payments (
 
 CREATE INDEX IF NOT EXISTS payments_status_idx
   ON payments.payments (status);
+
+CREATE TABLE IF NOT EXISTS payments.host_accounts (
+  id serial PRIMARY KEY,
+  email text NOT NULL UNIQUE,
+  account_id text NOT NULL,
+  details_submitted boolean NOT NULL DEFAULT false,
+  charges_enabled boolean NOT NULL DEFAULT false,
+  payouts_enabled boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
 `;
 
 await client.unsafe(SQL);

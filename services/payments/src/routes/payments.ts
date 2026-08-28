@@ -2,8 +2,9 @@ import { Hono } from "hono";
 import type { Context } from "hono";
 import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
-import { payments } from "../db/schema.js";
+import { payments, hostAccounts } from "../db/schema.js";
 import { db } from "../db/index.js";
+import { ensureHostAccounts } from "../db/bootstrap.js";
 import { isStripeConfigured, StripeNotConfiguredError } from "../lib/stripe.js";
 import { computeFees } from "../lib/fees.js";
 
@@ -19,6 +20,51 @@ function requireStripe(c: Context): Response | null {
 interface BookingLike {
   spaceId: number;
   priceCents: number;
+}
+
+// Creates a connected account via the Accounts v2 API ("connected accounts" for
+// a marketplace where the platform is the merchant of record and hosts receive
+// transfers). Expressed accounts get the Stripe-hosted Express onboarding flow.
+const STRIPE_V2_ACCOUNTS_URL = "https://api.stripe.com/v2/core/accounts";
+
+async function createConnectAccount(
+  stripe: Stripe,
+  email: string
+): Promise<{ id: string; details_submitted?: boolean | null }> {
+  const secret = process.env.STRIPE_SECRET_KEY;
+  const res = await fetch(STRIPE_V2_ACCOUNTS_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${secret}`,
+      "Content-Type": "application/json",
+      "Stripe-Version": "2026-08-26.dahlia",
+    },
+    body: JSON.stringify({
+      contact_email: email.replace(/\+[^@]*@/, "@"),
+      display_name: email.split("@")[0].replace(/[._+-]+/g, " ").trim() || "Host",
+      identity: { country: "nl", entity_type: "individual" },
+      configuration: {
+        recipient: {
+          capabilities: {
+            stripe_balance: { stripe_transfers: { requested: true } },
+          },
+        },
+      },
+      defaults: {
+        currency: "eur",
+        responsibilities: { fees_collector: "application", losses_collector: "application" },
+        locales: ["nl-NL"],
+      },
+      dashboard: "express",
+      include: ["configuration.recipient", "identity", "defaults"],
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`stripe v2 account create failed (${res.status}): ${text}`);
+  }
+  const data = (await res.json()) as { id: string };
+  return { id: data.id };
 }
 
 async function fetchBooking(bookingId: number): Promise<{ booking: BookingLike } | null> {
@@ -115,8 +161,64 @@ v1.get("/payments/bookings/:bookingId", async (c) => {
   return c.json({ payment: payment ?? null });
 });
 
+// GET /api/v1/payments/accounts/:email — onboarded status of a host's Connect account
+v1.get("/payments/accounts/:email", async (c) => {
+  const blocked = requireStripe(c);
+  if (blocked) return blocked;
+
+  const email = decodeURIComponent(c.req.param("email")).trim().toLowerCase();
+  if (!email) return c.json({ error: "invalid_email" }, 400);
+
+  const { getStripe } = await import("../lib/stripe.js");
+  const stripe = getStripe();
+  await ensureHostAccounts();
+
+  let row: typeof hostAccounts.$inferSelect | undefined;
+  try {
+    [row] = await db.select().from(hostAccounts).where(eq(hostAccounts.email, email)).limit(1);
+  } catch {
+    return c.json({ account: null });
+  }
+  if (!row) return c.json({ account: null });
+
+  try {
+    const account = await stripe.accounts.retrieve(row.accountId);
+    const raw = account as unknown as {
+      stripe_balance?: { payouts?: { status?: string } };
+    };
+    const payoutsState = raw.stripe_balance?.payouts ?? null;
+    const detailsSubmitted = account.details_submitted === true || payoutsState?.status === "active";
+    const payoutsEnabled = account.payouts_enabled === true || payoutsState?.status === "active";
+    const chargesEnabled = account.charges_enabled === true;
+    if (row.detailsSubmitted !== detailsSubmitted ||
+      row.chargesEnabled !== chargesEnabled ||
+      row.payoutsEnabled !== payoutsEnabled) {
+      try {
+        await db
+          .update(hostAccounts)
+          .set({ detailsSubmitted, chargesEnabled, payoutsEnabled, updatedAt: new Date() })
+          .where(eq(hostAccounts.id, row.id));
+      } catch {
+        // ignore persistence errors; status is still returned from Stripe
+      }
+    }
+    return c.json({
+      account: {
+        accountId: row.accountId,
+        detailsSubmitted,
+        chargesEnabled,
+        payoutsEnabled,
+        onboardingComplete: detailsSubmitted && payoutsEnabled,
+      },
+    });
+  } catch {
+    return c.json({ error: "stripe_error" }, 500);
+  }
+});
+
 // POST /api/v1/payments/accounts { email, returnUrl, refreshUrl }
 // Starts Stripe Connect onboarding for a host (Express accounts).
+// Creates the account once, reusing the stored accountId for repeat sessions.
 v1.post("/payments/accounts", async (c) => {
   const blocked = requireStripe(c);
   if (blocked) return blocked;
@@ -135,21 +237,52 @@ v1.post("/payments/accounts", async (c) => {
 
   const { getStripe } = await import("../lib/stripe.js");
   const stripe = getStripe();
+  await ensureHostAccounts();
 
   try {
-    const account = await stripe.accounts.create({
-      type: "express",
-      country: "NL",
-      email,
-      capabilities: { transfers: { requested: true } },
-    });
+    const normalizedEmail = email.trim().toLowerCase();
+    let existing: (typeof hostAccounts.$inferSelect) | undefined;
+    try {
+      [existing] = await db
+        .select()
+        .from(hostAccounts)
+        .where(eq(hostAccounts.email, normalizedEmail))
+        .limit(1);
+    } catch {
+      existing = undefined;
+    }
+    const account =
+      existing && existing.accountId
+        ? await stripe.accounts.retrieve(existing.accountId)
+        : await createConnectAccount(stripe, normalizedEmail);
+
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
       refresh_url: refreshUrl,
       return_url: returnUrl,
       type: "account_onboarding",
     });
-    return c.json({ accountId: account.id, onboardingUrl: accountLink.url }, 201);
+
+    try {
+      if (!existing) {
+        await db.insert(hostAccounts).values({
+          email: normalizedEmail,
+          accountId: account.id,
+        });
+      } else {
+        await db
+          .update(hostAccounts)
+          .set({ email: normalizedEmail, accountId: account.id, updatedAt: new Date() })
+          .where(eq(hostAccounts.id, existing.id));
+      }
+    } catch {
+      // persistence best-effort; onboarding continues regardless
+    }
+
+    return c.json(
+      { accountId: account.id, onboardingUrl: accountLink.url, onboarded: account.details_submitted === true },
+      201
+    );
   } catch {
     return c.json({ error: "stripe_error" }, 500);
   }

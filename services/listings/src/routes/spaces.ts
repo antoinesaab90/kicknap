@@ -88,7 +88,32 @@ v1.get("/spaces/:id", async (c) => {
   const id = Number(c.req.param("id"));
   if (!Number.isInteger(id)) return c.json({ error: "invalid_id" }, 400);
 
-  const [space] = await db.select().from(spaces).where(eq(spaces.id, id)).limit(1);
+  const [space] = await db
+    .select({
+      id: spaces.id,
+      hostId: spaces.hostId,
+      hostEmail: users.email,
+      name: spaces.name,
+      description: spaces.description,
+      address: spaces.address,
+      neighborhood: spaces.neighborhood,
+      city: spaces.city,
+      lat: spaces.lat,
+      lng: spaces.lng,
+      hourlyPriceCents: spaces.hourlyPriceCents,
+      minHours: spaces.minHours,
+      maxHours: spaces.maxHours,
+      rating: spaces.rating,
+      timesRated: spaces.timesRated,
+      photoUrl: spaces.photoUrl,
+      isDemo: spaces.isDemo,
+      published: spaces.published,
+      createdAt: spaces.createdAt,
+    })
+    .from(spaces)
+    .leftJoin(users, eq(users.id, spaces.hostId))
+    .where(eq(spaces.id, id))
+    .limit(1);
   if (!space) return c.json({ error: "space_not_found" }, 404);
   if (!space.published) return c.json({ error: "space_not_found" }, 404);
 
