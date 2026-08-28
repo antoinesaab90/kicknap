@@ -15,12 +15,12 @@
     "db:init": "npm run db:init -w services/listings && npm run db:init -w services/availability && npm run db:init -w services/bookings && npm run db:init -w services/identity && npm run db:init -w services/payments",
     "db:seed": "npm run db:seed -w services/listings && npm run db:seed -w services/availability && npm run db:seed -w services/bookings && npm run db:seed -w services/identity && npm run db:seed -w services/payments",
     "deploy:prod": "node scripts/deploy-prod.mjs",
-    "smoke:prod": "node scripts/smoke-prod.mjs"
+    "smoke:prod": "node scripts/smoke-prod.mjs",
+    "test": "npm run test -w web && npm run test -w services/availability && npm run test -w services/bookings && cd apps/mobile && npm run test"
   },
   "devDependencies": {
     "@rolldown/binding-win32-x64-msvc": "^1.2.6",
     "concurrently": "^10.0.5",
-    "dependency-cruiser": "^18.2.0",
-    "mobile": "file:apps/mobile"
+    "dependency-cruiser": "^18.2.0"
   }
 }
