@@ -1,6 +1,6 @@
 export function formatEuro(cents: number): string {
   const value = cents / 100;
-  return `�'�${Number.isInteger(value) ? value : value.toFixed(2)}`;
+  return `\u20ac${Number.isInteger(value) ? value : value.toFixed(2)}`;
 }
 
 export function minutesToTime(minutes: number): string {
@@ -64,4 +64,24 @@ export function formatDateTime(iso: string, lang: string): string {
     hour: "2-digit",
     minute: "2-digit",
   }).format(date);
+}
+
+export function amsZonedIso(dateStr: string, timeStr: string): string {
+  const [y, mo, d] = dateStr.split("-").map(Number);
+  const [hh, mi] = timeStr.split(":").map(Number);
+  const minutesIntoDay = hh * 60 + mi;
+  const utc =
+    Date.UTC(y, mo - 1, d) + minutesIntoDay * 60000 - amsterdamOffsetMinutes(dateStr) * 60000;
+  return new Date(utc).toISOString();
+}
+
+export function amsTimeLabel(iso: string): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: AMSTERDAM_TIME_ZONE,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(new Date(iso));
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "00";
+  return `${get("hour")}:${get("minute")}`;
 }

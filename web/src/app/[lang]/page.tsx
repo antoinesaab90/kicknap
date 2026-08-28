@@ -3,6 +3,7 @@ import { lang } from "next/root-params";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { serviceBaseUrl } from "@/lib/api";
 import { SpaceCard } from "@/components/space-card";
+import { localDateString } from "@/lib/format";
 import type { SpacesResponse } from "@/lib/types/space";
 
 function SearchIcon({ className }: { className?: string }) {
@@ -51,33 +52,67 @@ export default async function HomePage() {
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-lg text-navy-600">{dict.hero.tagline}</p>
 
-          {/* Search bar (visual — booking search arrives in the next milestone) */}
-          <div
+          {/* Search bar — real GET form to /search */}
+          <form
             role="search"
+            action={`/${currentLang}/search`}
+            method="get"
             className="mx-auto mt-12 flex max-w-2xl flex-col items-stretch gap-2 rounded-3xl border border-navy-100 bg-white p-3 shadow-xl shadow-navy-900/5 sm:flex-row sm:items-center sm:gap-0 sm:rounded-full sm:border-0 sm:p-2 sm:shadow-none sm:ring-1 sm:ring-navy-100"
           >
-            <div className="px-4 py-3 text-left sm:border-r sm:border-navy-100 sm:py-2 sm:px-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-navy-600">Where</p>
-              <p className="text-sm text-navy-800">{dict.hero.search.where}</p>
-            </div>
-            <div className="px-4 py-3 text-left sm:border-r sm:border-navy-100 sm:py-2 sm:px-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-navy-600">When</p>
-              <p className="text-sm text-navy-800">{dict.hero.search.when}</p>
-            </div>
-            <div className="px-4 py-3 text-left sm:py-2 sm:px-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-navy-600">How long</p>
-              <p className="text-sm text-navy-800">{dict.hero.search.howLong}</p>
-            </div>
+            <label className="px-4 py-3 text-left sm:border-r sm:border-navy-100 sm:py-2 sm:px-5">
+              <span className="block text-[11px] font-semibold uppercase tracking-wide text-navy-600">
+                {dict.hero.search.where}
+              </span>
+              <select
+                name="area"
+                defaultValue=""
+                className="mt-0.5 w-full bg-transparent text-sm text-navy-800 outline-none sm:w-auto"
+              >
+                <option value="">{dict.hero.search.allAreas}</option>
+                {(["centrum", "oost", "west", "zuid", "noord", "schiphol"] as const).map((area) => (
+                  <option key={area} value={area}>
+                    {dict.search.neighborhoods[area]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="px-4 py-3 text-left sm:border-r sm:border-navy-100 sm:py-2 sm:px-5">
+              <span className="block text-[11px] font-semibold uppercase tracking-wide text-navy-600">
+                {dict.hero.search.when}
+              </span>
+              <input
+                type="date"
+                name="date"
+                min={localDateString(new Date())}
+                className="mt-0.5 w-full bg-transparent text-sm text-navy-800 outline-none sm:w-auto"
+              />
+            </label>
+            <label className="px-4 py-3 text-left sm:py-2 sm:px-5">
+              <span className="block text-[11px] font-semibold uppercase tracking-wide text-navy-600">
+                {dict.hero.search.howLong}
+              </span>
+              <select
+                name="hours"
+                defaultValue="2"
+                className="mt-0.5 w-full bg-transparent text-sm text-navy-800 outline-none sm:w-auto"
+              >
+                {[1, 2, 3, 4, 6, 8].map((h) => (
+                  <option key={h} value={h}>
+                    {h} {dict.search.hoursSuffix}
+                  </option>
+                ))}
+              </select>
+            </label>
             <div className="px-4 pb-4 sm:px-2 sm:pb-0">
-              <Link
-                href={`/${currentLang}/search`}
+              <button
+                type="submit"
                 className="flex w-full items-center justify-center gap-2 rounded-full bg-navy-800 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-navy-700 sm:w-auto"
               >
                 <SearchIcon className="h-4 w-4" />
                 {dict.hero.search.button}
-              </Link>
+              </button>
             </div>
-          </div>
+          </form>
 
           <p className="mt-6 text-xs text-navy-600">
             Live in Amsterdam — book by the hour, pay online, no check-in ceremony.

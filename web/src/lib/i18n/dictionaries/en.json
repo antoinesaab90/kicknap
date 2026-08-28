@@ -20,7 +20,8 @@
     "search": {
       "where": "Where? Amsterdam, Netherlands",
       "when": "When? Today",
-      "howLong": "How long? 3 hours",
+      "howLong": "How long?",
+      "allAreas": "All of Amsterdam",
       "button": "Search"
     }
   },
@@ -93,6 +94,15 @@
     "clearFilters": "Clear filters",
     "searchDown": "Search is warming up — try again in a few seconds.",
     "minHours": "min",
+    "date": "Date",
+    "timeFrom": "From",
+    "duration": "Duration",
+    "hoursSuffix": "h",
+    "applyFilters": "Check availability",
+    "availOf": "of",
+    "availFreeAt": "spaces free at",
+    "availEmptyTitle": "Nothing free at that time",
+    "availEmptyText": "Try a different time slot — most spaces open 08:00\u201320:00 on weekdays.",
     "neighborhoods": {
       "all": "All of Amsterdam",
       "centrum": "Centrum",

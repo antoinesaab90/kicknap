@@ -1,8 +1,8 @@
 import { Hono } from "hono";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { openingHours } from "../db/schema.js";
 import { db } from "../db/index.js";
-import { fetchOwnedSpace, fetchSpace } from "../lib/listings.js";
+import { fetchAllSpaces, fetchOwnedSpace, fetchSpace } from "../lib/listings.js";
 import { amsMinutesOfDay, dateDayOfWeek, windowCovered } from "../lib/time.js";
 import type { OpeningHour } from "../db/index.js";
 
@@ -51,6 +51,59 @@ v1.get("/check", async (c) => {
   });
 });
 
+// GET /api/v1/check-many?from=2026-08-28T08:00:00Z&to=2026-08-28T11:00:00Z
+// Availability for every published space in one call (used by search filters).
+v1.get("/check-many", async (c) => {
+  const from = c.req.query("from");
+  const to = c.req.query("to");
+
+  if (!from || !to) return c.json({ error: "missing_from_or_to" }, 400);
+
+  const fromMs = Date.parse(from);
+  const toMs = Date.parse(to);
+  if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || toMs <= fromMs) {
+    return c.json({ error: "invalid_range" }, 400);
+  }
+
+  const spaces = await fetchAllSpaces();
+  if (!spaces.length) return c.json({ from, to, results: [] });
+
+  const rules = (await db
+    .select()
+    .from(openingHours)
+    .where(inArray(openingHours.spaceId, spaces.map((s) => s.id)))) as (OpeningHour & { dayOfWeek: number })[];
+
+  const rulesBySpace = new Map<number, OpeningHour[]>();
+  for (const rule of rules) {
+    const list = rulesBySpace.get(rule.spaceId) ?? [];
+    list.push(rule);
+    rulesBySpace.set(rule.spaceId, list);
+  }
+
+  const durationMinutes = (toMs - fromMs) / 60000;
+
+  const results = spaces.map((space) => {
+    if (durationMinutes < space.minHours * 60) {
+      return { spaceId: space.id, available: false, reason: "shorter_than_min" as const };
+    }
+    if (durationMinutes > space.maxHours * 60) {
+      return { spaceId: space.id, available: false, reason: "longer_than_max" as const };
+    }
+    const spaceRules = rulesBySpace.get(space.id) ?? [];
+    if (!spaceRules.length) {
+      return { spaceId: space.id, available: false, reason: "no_opening_hours" as const };
+    }
+    const covered = windowCovered(fromMs, toMs, spaceRules);
+    return {
+      spaceId: space.id,
+      available: covered,
+      reason: covered ? ("available" as const) : ("outside_opening_hours" as const),
+    };
+  });
+
+  const available = results.filter((r) => r.available).length;
+  return c.json({ from, to, available, total: results.length, results });
+});
 // GET /api/v1/spaces/:id/day?date=2026-08-28
 v1.get("/spaces/:id/day", async (c) => {
   const id = Number(c.req.param("id"));

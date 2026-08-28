@@ -20,7 +20,8 @@
     "search": {
       "where": "Waar? Amsterdam, Nederland",
       "when": "Wanneer? Vandaag",
-      "howLong": "Hoe lang? 3 uur",
+      "howLong": "Hoe lang?",
+      "allAreas": "Heel Amsterdam",
       "button": "Zoeken"
     }
   },
@@ -93,6 +94,15 @@
     "clearFilters": "Filters wissen",
     "searchDown": "Zoeken start op — probeer over een paar seconden opnieuw.",
     "minHours": "min",
+    "date": "Datum",
+    "timeFrom": "Vanaf",
+    "duration": "Duur",
+    "hoursSuffix": "u",
+    "applyFilters": "Controleer beschikbaarheid",
+    "availOf": "van",
+    "availFreeAt": "ruimtes vrij om",
+    "availEmptyTitle": "Niets vrij op dat tijdstip",
+    "availEmptyText": "Probeer een ander tijdstip \u2014 de meeste ruimtes zijn doordeweeks open van 08:00\u201320:00.",
     "neighborhoods": {
       "all": "Heel Amsterdam",
       "centrum": "Centrum",
