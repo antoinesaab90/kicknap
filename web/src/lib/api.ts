@@ -1,12 +1,15 @@
 import type { MeResponse, UserDto } from "./types/auth";
 import type { SpaceDetailDto, SpaceResponse } from "./types/space";
 
-export function serviceBaseUrl(name: "listings" | "availability" | "bookings" | "identity"): string {
+export function serviceBaseUrl(
+  name: "listings" | "availability" | "bookings" | "identity" | "payments"
+): string {
   const map = {
     listings: process.env.SERVICE_LISTINGS_URL ?? "http://localhost:3001",
     availability: process.env.SERVICE_AVAILABILITY_URL ?? "http://localhost:3002",
     bookings: process.env.SERVICE_BOOKINGS_URL ?? "http://localhost:3003",
     identity: process.env.SERVICE_IDENTITY_URL ?? "http://localhost:3004",
+    payments: process.env.SERVICE_PAYMENTS_URL ?? "http://localhost:3005",
   } as const;
   return map[name];
 }

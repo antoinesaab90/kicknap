@@ -43,7 +43,7 @@
 - **App later:** React Native
 - **API:** Hono (TypeScript) microservices — **live**
 - **Database:** PostgreSQL on Neon (`neondb`, eu-central-1), Drizzle ORM 0.45.2 + postgres-js — **live**
-- **Payments:** Stripe Connect (scaffold built, keys needed)
+- **Payments:** Stripe Payments + Connect via Stripe Checkout + webhook — **live in test mode** (keys + webhook destination set)
 - **Hosting:** Vercel (web iad1, services fra1) — **live**
 - **Repo:** https://github.com/antoinesaab90/kicknap (public, branch `main`) — **live**
 - **Local dev:** Next.js 16.3.3 docs ONLY at `web\node_modules\next\dist\docs\` (breaking changes vs. older Next — `lang()`/`cookies()` async, `params` Promises, `proxy.ts` middleware). `proxy.ts` matcher excludes `/api/*`.
@@ -178,6 +178,7 @@ All files at: `C:\Users\antoi\Documents\Default Project\kicknap\`
 - **Session 10:** Next.js 16.3.3 migration; deployed web + listings/availability/bookings/identity to Vercel production; kicknap.com domain attached
 - **Session 11:** Booking flow end-to-end (space detail + booking widget, availability + price, auth login/logout), payments service scaffold (Stripe), infra tooling (`deploy:prod`, `smoke:prod`), drizzle-orm 0.44→0.45.2 security patch
 - **Session 12:** Final checks, redeploy of all 6 apps (drizzle 0.45.2), smoke 15/15, `git commit 2d6f80c` + push, **self-service registration** (`/register`, BFF route), live verification, `git commit 020c6fe` + push
+- **Session 13:** **Payments live end-to-end (test mode)**: Stripe account (Learnix, Payments + Connect) set up by user with guidance; test keys + Connect client ID + webhook secret added to `payments` Vercel env; payments service `POST /payments/checkout` (Stripe Checkout hosted page, iDeal + cards), `POST /payments/webhook` (v1 snapshot events, signature verify); web `/api/checkout` BFF + "Pay now" step in booking widget (redirect flow). Verified live: booking → Checkout → successful payment → webhook → payments row `succeeded` (€17.16). doc + `git commit b+` pushed.
 
 ## Production Architecture
 - **9 services (bubbles):** Auth, Listing, Booking, Payment, Pricing, Notification, Search, Review, Admin
@@ -232,20 +233,22 @@ All files at: `C:\Users\antoi\Documents\Default Project\kicknap\`
 
 ### Web routes
 - Pages (BFF-proxied, `/[lang]` = `en`/`nl`): `/` (landing), `/[lang]` — `search`, `spaces/[id]`, `login`, `register`, `bookings`; `/sitemap.xml`
-- Route handlers (BFF): `GET /api/auth/me`, `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/logout`, `GET /api/availability`, `GET+POST /api/bookings`
+- Route handlers (BFF): `GET /api/auth/me`, `POST /api/auth/login`, `POST /api/auth/register`, `POST /api/auth/logout`, `GET /api/availability`, `GET+POST /api/bookings`, `POST /api/checkout` (Stripe hosted Checkout for a confirmed booking)
 - Auth = httpOnly cookie `kn_session` (+ display cookie `kn_user`). Register/login auto-login. Logout redirects via `?next=`.
 - Server services expose `/api/v1/...`; each has `/health` → `{ok:true,service}`.
 
 ### Database (single Neon `neondb`, eu-central-1)
 - One Postgres, per-service schemas (drizzle `pgSchema`): `identity.*` (users), `listings.*` (spaces, opening_hours), `availability.*`, `bookings.*` (bookings), `payments.*` (payments table)
 - Reaching prod DB from a local script: **pass `DATABASE_URL` explicitly** (e.g. `env:DATABASE_URL = "postgresql://neondb_owner:***@ep-purple-frog-b15k5ftd.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require"`) — the services' own `.env` files point at a **localhost Postgres (dev only)** and silently hit the wrong DB.
-- Seed state: 12 demo spaces (ids 13–24), 84 opening-hour rows, 1 demo booking (space 21, 2026-08-28 08:00–10:00Z, €15.60, id 2), 2 demo users. Demo accounts: `guest+demo@kicknap.com` / `host+demo@kicknap.com`, password `demo12345` (public demo creds — shown on the login page).
+- Seed state: 12 demo spaces (ids 13–24), 84 opening-hour rows, bookings id 2 (space 21, 2026-08-28, €15.60) and id 6 (space 21, 2026-08-29, paid €17.16 → payments row id 1 `succeeded`), 2 demo users. Demo accounts: `guest+demo@kicknap.com` / `host+demo@kicknap.com`, password `demo12345` (public demo creds — shown on the login page).
 
 ### Key flows (verified live)
 1. Register / Login → `kn_session` cookie → `/api/auth/me`
 2. Space detail → availability check (`available` | `outside_opening_hours` | `no_opening_hours` | `shorter_than_min` | `longer_than_max` | `space_not_found`) → ≈price (10% guest / 3% host fees)
 3. Instant booking → 201; overlapping slot → 409 `slot_conflict`; "My bookings" via `?guestEmail=` filter
-4. Payments scaffold: `POST /api/v1/payments/intents` → 503 `stripe_not_configured` until Stripe keys set (guarded, correct behavior)
+4. **Payment (test mode)** → booking success card shows **Pay now** → `POST /api/checkout` (web BFF) → `POST /api/v1/payments/checkout` creates Stripe **Checkout Session** (hosted page; `payment_intent_data.transfer_data` + `application_fee_amount` ONLY when a `hostAccountId` is supplied) → user pays (4242) → `payment_intent.succeeded` → webhook verifies `Stripe-Signature` → payments row `succeeded`. Verified: booking 6, €17.16 (guest 17.16 / host payout 15.13 / platform 2.03).
+   - Payments destination (test env): created via **Stripe v2 API** `POST /api.stripe.com/v2/core/event_destinations` (`event_payload: snapshot`, `events_from: @self`, enabled `payment_intent.succeeded` + `payment_intent.payment_failed`), id `we_1U9Uq2...`, URL = `https://payments-olive.vercel.app/api/v1/payments/webhook`. Signing secret held in Vercel env `STRIPE_WEBHOOK_SECRET` (never commit).
+   - ⚠️ The dashboard "Create an event destination" flow put the user's destination in the WRONG environment (delivered 0 events to test mode). Use the v2 API to create destinations, not the dashboard.
 
 ### Operations
 - Dev: `npm run dev` (root — all 5 services + web). Env: `npm run db:init`, `npm run db:seed`
@@ -271,14 +274,16 @@ All files at: `C:\Users\antoi\Documents\Default Project\kicknap\`
 ## 2. Pending Work (next sessions)
 
 ### Blocked on user (do first, they unlock me)
-- **Payments live:** add `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_CONNECT_CLIENT_ID` to the `payments` Vercel project envs (production). Then: wire Stripe Elements into the booking widget, `payment_intent.succeeded` webhook → confirm booking, refunds/deposits.
+- **Booking emails:** decide + provide SMTP for a transactional email service (Zoho Mail recommended; needs SPF/DKIM DNS records at the registrar for the sending domain). Then build service + send on booking create/complete.
+- **Stripe:** delete the stray dashboard webhook destination (Workbench → Webhooks) in the wrong environment; later "Activate payouts" test with a fake host; go-live requires live-mode keys + verification (real money).
 - **Git auto-deploy (optional):** user accepts GitHub↔Vercel integration per project (dashboard → Settings → Git → Connect). All 6 projects are separate.
 
 ### Autonomous next steps
-1. Hosts: Connect onboarding (`/payments/accounts`), host dashboard, listing creation UI (needs listings service CRUD write path)
-2. Search depth: availability-aware search (hide booked slots) + wire home hero search box
-3. Registration polish: email verification (later), profile page
-4. (Optional) Notification service (bubble 6) — email confirmations
+1. Bookings page: show payment status per booking (paid/pending/failed) by joining payments service
+2. Hosts: Connect onboarding (`/payments/accounts`), host dashboard, listing creation UI (needs listings service CRUD write path)
+3. Search depth: availability-aware search (hide booked slots) + wire home hero search box
+4. Guard: dedupe/refund if a booking gets paid twice (payments row unique per booking)
+5. Profile page + (later) email verification
 
 ---
 *Last updated: August 2026*

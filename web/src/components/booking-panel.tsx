@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatEuro, amsterdamOffset, localDateString } from "@/lib/format";
 import type { BookingDto, BookingErrorCode } from "@/lib/types/booking";
+import type { CheckoutResponse } from "@/lib/types/payments";
 
 export interface BookingTexts {
   date: string;
@@ -29,6 +30,10 @@ export interface BookingTexts {
   bookedText: string;
   viewBookings: string;
   bookAnother: string;
+  payTitle: string;
+  payNow: string;
+  paying: string;
+  paymentFailed: string;
 }
 
 type CheckState =
@@ -67,6 +72,8 @@ export function BookingPanel({
   const [booking, setBooking] = useState<BookingDto | null>(null);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
 
   const hourOptions = useMemo(() => {
     const from = Math.max(1, Math.round(minHours));
@@ -123,6 +130,7 @@ export function BookingPanel({
       if (res.ok && data.booking) {
         setBooking(data.booking);
         setCheck({ status: "idle" });
+        await payForBooking(data.booking);
       } else {
         setBookingError(reasonText(data.error ?? "unknown"));
       }
@@ -130,6 +138,36 @@ export function BookingPanel({
       setBookingError(texts.unavailable);
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function payForBooking(bookingToPay: BookingDto) {
+    setPaying(true);
+    setPayError(null);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          bookingId: bookingToPay.id,
+          spaceId,
+          lang,
+        }),
+      });
+      if (res.status === 401) {
+        router.push(loginHref);
+        return;
+      }
+      const data = (await res.json()) as Partial<CheckoutResponse>;
+      if (!res.ok || !data.url) {
+        setPayError(texts.paymentFailed);
+        return;
+      }
+      window.location.assign(data.url);
+    } catch {
+      setPayError(texts.paymentFailed);
+    } finally {
+      setPaying(false);
     }
   }
 
@@ -175,10 +213,20 @@ export function BookingPanel({
             <span className="text-navy-600"> · {booking.durationMinutes / 60}h</span>
           </p>
         </div>
+
         <div className="mt-5 flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={() => payForBooking(booking)}
+            disabled={paying}
+            className="rounded-full bg-gold-600 px-5 py-3 text-center text-sm font-semibold text-navy-950 transition-colors hover:bg-gold disabled:opacity-50"
+          >
+            {paying ? texts.paying : texts.payNow}
+          </button>
+          {payError && <p className="text-sm font-medium text-rose-700">{payError}</p>}
           <a
             href={bookingsHref}
-            className="rounded-full bg-navy-800 px-5 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-navy-700"
+            className="rounded-full border border-navy-200 px-5 py-3 text-center text-sm font-semibold text-navy-700 transition-colors hover:border-navy-400"
           >
             {texts.viewBookings}
           </a>
@@ -188,7 +236,7 @@ export function BookingPanel({
               setBooking(null);
               setCheck({ status: "idle" });
             }}
-            className="rounded-full border border-navy-200 px-5 py-3 text-sm font-semibold text-navy-700 transition-colors hover:border-navy-400"
+            className="text-sm font-medium text-navy-600 underline-offset-2 hover:underline"
           >
             {texts.bookAnother}
           </button>

@@ -62,6 +62,10 @@ export default async function SpacePage({
     bookedText: dict.space.bookedText,
     viewBookings: dict.space.viewBookings,
     bookAnother: dict.space.bookAnother,
+    payTitle: dict.space.payTitle,
+    payNow: dict.space.payNow,
+    paying: dict.space.paying,
+    paymentFailed: dict.space.paymentFailed,
   };
 
   return (
