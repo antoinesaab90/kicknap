@@ -42,6 +42,37 @@ export interface OpeningRule {
   endMinute: number;
 }
 
+// YYYY-MM-DD of the instant in the Amsterdam timezone.
+function amsDateStringAt(ms: number): string {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(ms);
+  const read = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${read("year")}-${read("month")}-${read("day")}`;
+}
+
+// Absolute start-of-day (00:00 local) for a YYYY-MM-DD in Amsterdam.
+// Probed at 12:00Z so the wall clock is always well inside that calendar day.
+function amsMidnightOfDate(date: string): number {
+  const probe = Date.parse(`${date}T12:00:00Z`);
+  return probe - amsMinutesOfDay(probe) * 60 * 1000;
+}
+
+// Next calendar date after `date` in the Amsterdam timezone.
+// Safe across DST transitions (a wall day can be 23, 24 or 25 hours long).
+function amsNextDate(date: string): string {
+  let ms = amsMidnightOfDate(date) + 24 * 60 * 60 * 1000;
+  let next = amsDateStringAt(ms);
+  if (next === date) {
+    ms += 24 * 60 * 60 * 1000;
+    next = amsDateStringAt(ms);
+  }
+  return next;
+}
+
 export function windowCovered(
   fromMs: number,
   toMs: number,
@@ -61,17 +92,24 @@ export function windowCovered(
     );
   };
 
-  let dayStart = fromMs;
-  let firstDay = true;
+  const startDate = amsDateStringAt(fromMs);
+  const endDate = amsDateStringAt(toMs - 1);
 
-  while (dayStart < toMs) {
-    const dayOfWeek = amsDayMinute(new Date(dayStart).toISOString()).dayOfWeek;
-    const nextDay = dayStart + 24 * 60 * 60 * 1000;
-    const segmentFrom = firstDay ? amsMinutesOfDay(fromMs) : 0;
-    const segmentTo = nextDay >= toMs ? amsMinutesOfDay(toMs) : 1440;
-    if (!isCovered(dayOfWeek, segmentFrom, segmentTo)) return false;
-    dayStart = nextDay;
-    firstDay = false;
+  let date = startDate;
+  for (;;) {
+    const dayStart = amsMidnightOfDate(date);
+    const dayEnd = amsMidnightOfDate(amsNextDate(date));
+    const segmentFrom = Math.max(fromMs, dayStart);
+    const segmentTo = Math.min(toMs, dayEnd);
+
+    if (segmentTo > segmentFrom) {
+      const startMinute = segmentFrom === fromMs ? amsMinutesOfDay(fromMs) : 0;
+      const endMinute = segmentTo === toMs ? amsMinutesOfDay(toMs) : 1440;
+      if (!isCovered(dateDayOfWeek(date), startMinute, endMinute)) return false;
+    }
+
+    if (date === endDate) break;
+    date = amsNextDate(date);
   }
 
   return true;
