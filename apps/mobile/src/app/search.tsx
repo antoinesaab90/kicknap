@@ -1,10 +1,11 @@
 import { router } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   FlatList,
   Image,
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,7 +17,7 @@ import { checkMany, listSpaces } from '@/lib/api';
 import { amsZonedIso, formatEuro } from '@/lib/format';
 import { colors, radius, spacing } from '@/lib/theme';
 import type { Space } from '@/lib/types';
-import { Pill } from '@/components/ui';
+import { Button, Pill } from '@/components/ui';
 
 const AREAS = [
   { value: '', label: 'All' },
@@ -37,26 +38,34 @@ export default function SearchScreen() {
   const [hours, setHours] = useState(2);
   const [checking, setChecking] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const data = await listSpaces({ area: area || undefined });
-        if (active) setSpaces(data.spaces);
-      } catch {
-        if (active) setError(true);
-      } finally {
-        if (active) setLoading(false);
+  const load = useCallback(
+    async (nextArea: string, refresh = false) => {
+      if (refresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+        setError(false);
       }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [area]);
+      try {
+        const data = await listSpaces({ area: nextArea || undefined });
+        setSpaces(data.spaces);
+        setError(false);
+      } catch {
+        if (!refresh) setError(true);
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+      }
+    },
+    []
+  );
 
-  const filtered = useMemo(() => spaces, [spaces]);
+  useEffect(() => {
+    void load(area);
+  }, [area, load]);
 
   const runCheck = async () => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) {
@@ -157,13 +166,19 @@ export default function SearchScreen() {
         {loading ? (
           <Text style={styles.muted}>Loading spaces…</Text>
         ) : error ? (
-          <Text style={styles.muted}>Could not load spaces right now.</Text>
+          <View style={styles.errorBox}>
+            <Text style={styles.muted}>Could not load spaces right now.</Text>
+            <Button label="Try again" onPress={() => void load(area)} />
+          </View>
         ) : (
           <FlatList
-            data={filtered}
+            data={spaces}
             keyExtractor={(s) => String(s.id)}
             renderItem={({ item }) => <SearchCard space={item} />}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={() => void load(area, true)} />
+            }
           />
         )}
       </SafeAreaView>
@@ -260,6 +275,7 @@ const styles = StyleSheet.create({
   checkBtnDisabled: { opacity: 0.6 },
   checkBtnText: { color: colors.white, fontSize: 14, fontWeight: '700' },
   muted: { color: colors.muted, fontSize: 14, paddingVertical: spacing.s4 },
+  errorBox: { gap: spacing.s3, paddingVertical: spacing.s4 },
   card: {
     backgroundColor: colors.white,
     borderRadius: radius.xl,

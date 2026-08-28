@@ -1,6 +1,6 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { myBookings } from '@/lib/api';
 import { formatAmsterdam, formatEuro } from '@/lib/format';
@@ -11,27 +11,46 @@ import { useAuth } from '@/lib/auth';
 
 export default function BookingsScreen() {
   const { user, token, signOut } = useAuth();
+  const params = useLocalSearchParams<{ booking?: string }>();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
+  const [justPaid, setJustPaid] = useState(params.booking ? Number(params.booking) : null);
 
-  useEffect(() => {
-    if (!user || !token) return;
-    let active = true;
-    (async () => {
+  const load = useCallback(
+    async (opts: { refresh?: boolean } = {}) => {
+      if (!user || !token) return;
+      if (opts.refresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+        setError(false);
+      }
       try {
         const data = await myBookings(token, user.email);
-        if (active) setBookings(data);
+        setBookings(data);
+        setError(false);
       } catch {
-        if (active) setError(true);
+        setError(true);
       } finally {
-        if (active) setLoading(false);
+        setLoading(false);
+        setRefreshing(false);
       }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [user, token]);
+    },
+    [user, token]
+  );
+
+  useEffect(() => {
+    if (user && token) void load();
+  }, [user, token, load]);
+
+  useEffect(() => {
+    if (justPaid) {
+      const t = setTimeout(() => setJustPaid(null), 6000);
+      return () => clearTimeout(t);
+    }
+  }, [justPaid]);
 
   const doSignOut = useCallback(async () => {
     await signOut();
@@ -60,10 +79,18 @@ export default function BookingsScreen() {
             <Text style={styles.signOut}>Sign out</Text>
           </Pressable>
         </View>
+        {justPaid ? (
+          <View style={styles.banner}>
+            <Text style={styles.bannerText}>Payment received — you are booked!</Text>
+          </View>
+        ) : null}
         {loading ? (
           <Text style={styles.muted}>Loading…</Text>
         ) : error ? (
-          <Text style={styles.muted}>Could not load your bookings.</Text>
+          <View style={styles.errorBox}>
+            <Text style={styles.muted}>Could not load your bookings.</Text>
+            <Button label="Try again" onPress={() => void load()} />
+          </View>
         ) : bookings.length === 0 ? (
           <Text style={styles.muted}>No bookings yet. Find a space to get started.</Text>
         ) : (
@@ -73,6 +100,9 @@ export default function BookingsScreen() {
             renderItem={({ item }) => <BookingCard booking={item} />}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.list}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={() => void load({ refresh: true })} />
+            }
           />
         )}
       </SafeAreaView>
@@ -112,6 +142,14 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: 26, fontWeight: '800', color: colors.navy900, marginTop: spacing.s4 },
   signOut: { color: colors.red, fontWeight: '600', fontSize: 14 },
+  banner: {
+    backgroundColor: colors.emeraldBg,
+    borderRadius: radius.lg,
+    padding: spacing.s3 + 2,
+    marginBottom: spacing.s3,
+  },
+  bannerText: { color: '#0a8f52', fontWeight: '700', fontSize: 14 },
+  errorBox: { gap: spacing.s3, paddingVertical: spacing.s4 },
   list: { paddingBottom: spacing.s6 },
   card: {
     backgroundColor: colors.white,

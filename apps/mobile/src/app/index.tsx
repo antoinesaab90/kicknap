@@ -1,35 +1,43 @@
 import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import { FlatList, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { FlatList, Image, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { listSpaces } from '@/lib/api';
 import { formatEuro } from '@/lib/format';
 import { colors, radius, spacing } from '@/lib/theme';
 import type { Space } from '@/lib/types';
 import { useAuth } from '@/lib/auth';
+import { Button } from '@/components/ui';
 
 export default function HomeScreen() {
   const { user } = useAuth();
   const [spaces, setSpaces] = useState<Space[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      try {
-        const data = await listSpaces({});
-        if (active) setSpaces(data.spaces.slice(0, 6));
-      } catch {
-        if (active) setError(true);
-      } finally {
-        if (active) setLoading(false);
-      }
-    })();
-    return () => {
-      active = false;
-    };
+  const load = useCallback(async (opts: { refresh?: boolean } = {}) => {
+    if (opts.refresh) {
+      setRefreshing(true);
+    } else {
+      setLoading(true);
+      setError(false);
+    }
+    try {
+      const data = await listSpaces({});
+      setSpaces(data.spaces.slice(0, 6));
+      setError(false);
+    } catch {
+      setError(true);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   return (
     <ScreenWithSafeArea>
@@ -60,13 +68,21 @@ export default function HomeScreen() {
       {loading ? (
         <Text style={styles.mutedText}>Loading…</Text>
       ) : error ? (
-        <Text style={styles.mutedText}>Could not load spaces right now.</Text>
+        <View style={styles.errorBox}>
+          <Text style={styles.mutedText}>Could not load spaces right now.</Text>
+          <View style={styles.errorCta}>
+            <Button label="Try again" onPress={() => void load()} />
+          </View>
+        </View>
       ) : (
         <FlatList
           data={spaces}
           keyExtractor={(s) => String(s.id)}
           renderItem={({ item }) => <SpaceCard space={item} />}
           showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={() => void load({ refresh: true })} />
+          }
         />
       )}
     </ScreenWithSafeArea>
@@ -152,6 +168,8 @@ const styles = StyleSheet.create({
     color: colors.navy900,
     marginBottom: spacing.s4,
   },
+  errorBox: { gap: spacing.s3 },
+  errorCta: { alignItems: 'flex-start', minWidth: 120 },
   mutedText: { color: colors.muted, fontSize: 14 },
   card: {
     backgroundColor: colors.white,

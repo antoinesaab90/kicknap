@@ -13,13 +13,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { createBooking, createCheckout, fetchSpace, paymentStatus } from '@/lib/api';
-import { amsZonedIso, formatEuro } from '@/lib/format';
+import { amsOffsetMinutes, amsZonedIso, formatEuro } from '@/lib/format';
 import { colors, radius, spacing } from '@/lib/theme';
 import type { Space } from '@/lib/types';
 import { Button } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 
-const HOUR_OPTIONS = [1, 2, 3, 4, 6, 8];
+const BASE_HOURS = [1, 2, 3, 4, 6, 8];
 
 export default function SpaceDetailScreen() {
   const params = useLocalSearchParams<{ id: string }>();
@@ -52,6 +52,33 @@ export default function SpaceDetailScreen() {
     [space, hours]
   );
 
+  const hourOptions = useMemo(() => {
+    if (!space) return [2];
+    const set = new Set<number>();
+    for (const h of BASE_HOURS) {
+      if (h >= space.minHours && h <= space.maxHours) set.add(h);
+    }
+    set.add(space.minHours);
+    set.add(space.maxHours);
+    return Array.from(set).sort((a, b) => a - b);
+  }, [space]);
+
+  useEffect(() => {
+    if (space && !hourOptions.includes(hours)) {
+      setHours(space.minHours);
+    }
+  }, [space, hourOptions, hours]);
+
+  const todayAms = useMemo(() => {
+    const now = new Date();
+    const shifted = now.getTime() + amsOffsetMinutes(now.toISOString().slice(0, 10)) * 60000;
+    const d = new Date(shifted);
+    const y = d.getUTCFullYear();
+    const mo = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const da = String(d.getUTCDate()).padStart(2, '0');
+    return `${y}-${mo}-${da}`;
+  }, []);
+
   const bookNow = async () => {
     if (!space) return;
     if (!user || !token) {
@@ -65,9 +92,26 @@ export default function SpaceDetailScreen() {
       Alert.alert('Pick a time', 'Choose a date and start time.');
       return;
     }
+    if (!/^\d{2}:\d{2}$/.test(time) || Number(time.slice(0, 2)) > 23 || Number(time.slice(3)) > 59) {
+      Alert.alert('Invalid time', 'Use a time between 00:00 and 23:59.');
+      return;
+    }
+    if (date < todayAms) {
+      Alert.alert('Date in the past', 'Pick today or a later date.');
+      return;
+    }
+    if (hours < space.minHours || hours > space.maxHours) {
+      Alert.alert('Not allowed', `This space books between ${space.minHours} and ${space.maxHours} hours.`);
+      return;
+    }
     setBusy(true);
     try {
       const fromIso = amsZonedIso(date, time);
+      if (date === todayAms && Date.parse(fromIso) <= Date.now() - 60000) {
+        setBusy(false);
+        Alert.alert('Too late', 'Pick a start time in the future.');
+        return;
+      }
       const toIso = new Date(Date.parse(fromIso) + hours * 3600_000).toISOString();
       const { booking } = await createBooking({
         token,
@@ -84,19 +128,25 @@ export default function SpaceDetailScreen() {
         successUrl,
         cancelUrl,
       });
-      await WebBrowser.openBrowserAsync(session.url);
+      void WebBrowser.openBrowserAsync(session.url).catch(() => {});
       await waitForPayment(booking.id);
       router.replace('/bookings');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Booking failed.';
-      Alert.alert('Booking failed', message);
+      const raw = err instanceof Error ? err.message : 'Booking failed.';
+      const friendly =
+        raw.includes('slot_conflict')
+          ? 'That slot is already taken. Try another time.'
+          : raw.includes('already_paid')
+            ? 'This booking was already paid.'
+            : raw;
+      Alert.alert('Booking failed', friendly);
     } finally {
       setBusy(false);
     }
   };
 
   const waitForPayment = async (bookingId: number) => {
-    const deadline = Date.now() + 90_000;
+    const deadline = Date.now() + 120_000;
     while (Date.now() < deadline) {
       await new Promise((r) => setTimeout(r, 2500));
       const status = await paymentStatus(bookingId).catch(() => ({ status: null }));
@@ -171,7 +221,7 @@ export default function SpaceDetailScreen() {
               </View>
               <Text style={styles.fieldLabel}>Hours</Text>
               <View style={styles.hoursRow}>
-                {HOUR_OPTIONS.map((h) => (
+                {hourOptions.map((h) => (
                   <Pressable
                     key={h}
                     onPress={() => setHours(h)}
