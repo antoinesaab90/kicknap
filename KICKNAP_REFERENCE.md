@@ -40,7 +40,7 @@
 
 ## Tech Stack
 - **Web:** React / Next.js 16.3.3 (App Router + Turbopack, React 19) — **live**
-- **App later:** React Native
+- **App later:** React Native — **in progress**: Expo SDK 57 app scaffolded at `apps/mobile` (see §1d)
 - **API:** Hono (TypeScript) microservices — **live**
 - **Database:** PostgreSQL on Neon (`neondb`, eu-central-1), Drizzle ORM 0.45.2 + postgres-js — **live**
 - **Payments:** Stripe Payments + Connect via Stripe Checkout + webhook — **live in test mode** (keys + webhook destination set)
@@ -179,6 +179,7 @@ All files at: `C:\Users\antoi\Documents\Default Project\kicknap\`
 - **Session 11:** Booking flow end-to-end (space detail + booking widget, availability + price, auth login/logout), payments service scaffold (Stripe), infra tooling (`deploy:prod`, `smoke:prod`), drizzle-orm 0.44→0.45.2 security patch
 - **Session 12:** Final checks, redeploy of all 6 apps (drizzle 0.45.2), smoke 15/15, `git commit 2d6f80c` + push, **self-service registration** (`/register`, BFF route), live verification, `git commit 020c6fe` + push
 - **Session 13:** **Payments live end-to-end (test mode)**: Stripe account (Learnix, Payments + Connect) set up by user with guidance; test keys + Connect client ID + webhook secret added to `payments` Vercel env; payments service `POST /payments/checkout` (Stripe Checkout hosted page, iDeal + cards), `POST /payments/webhook` (v1 snapshot events, signature verify); web `/api/checkout` BFF + "Pay now" step in booking widget (redirect flow). Verified live: booking → Checkout → successful payment → webhook → payments row `succeeded` (€17.16). doc + `git commit b+` pushed.
+- **Session 14 (cont. Aug 28):** availability-aware search (**Part A**), double-payment guard (**Part B**), host earnings ledger (**Part C**) — all live (see §1c), commits `30c284a` + `b000927` pushed. **Native app scaffolded:** Expo SDK 57 in `apps/mobile` (see §1d).
 
 ## Production Architecture
 - **9 services (bubbles):** Auth, Listing, Booking, Payment, Pricing, Notification, Search, Review, Admin
@@ -229,6 +230,14 @@ All files at: `C:\Users\antoi\Documents\Default Project\kicknap\`
 - **Booking emails, SMTP-ready** (`services/bookings/src/lib/mail.ts` + `nodemailer@6.9.14`): `notifyBookingCreated` on booking create — guest confirmation + host new-booking notifications; lazy transporter; no-op unless SMTP env set; HTML-escaped templates. Listings `GET /spaces/:id` now returns `hostEmail` (leftJoin users).
 - **Home polish**: live featured-spaces strip (first 6 published, `SpaceCard`, `dict.featured.*` en+nl) between How-it-works and Testimonial; hero subtitle updated ("Live in Amsterdam").
 - E2E fully green end-to-end (search/detail/day/check/book/pay/login/web pages) on prod.
+
+## 1d. Session: native app scaffold (Aug 28)
+- **Expo SDK 57 app** at `apps/mobile` (`create-expo-app --template default`; expo ~57.0.18, expo-router/entry, RN 0.86.3, React 19.2.3, TS ~6.0.3). App name/slug/scheme `kicknap`; `experiments`: `typedRoutes:false` (dynamic pushes), `reactCompiler:true`; paths `@/*` → `./src/*`. Deps added: `expo-secure-store` (~57.0.2; expo-web-browser already in template).
+- **Foundation written:** `src/lib/theme.ts` (navy/gold, spacing, radius), `src/lib/types.ts`, `src/lib/api.ts` (ENV-driven base URLs via `EXPO_PUBLIC_LISTINGS/AVAILABILITY/BOOKINGS/IDENTITY/PAYMENTS_URL`; listSpaces/checkMany/fetchSpace/login/register/me/createBooking/createCheckout/paymentStatus/myBookings), `src/lib/format.ts` (**DST-safe** amsOffsetMinutes — last Sun Mar/Oct EU rule, manual — amsZonedIso, formatEuro `\u20ac`, formatAmsterdam/amsTimeLabel), `src/lib/auth.tsx` (AuthProvider; SecureStore `kn_token`/`kn_email`), `src/components/ui.tsx` (Screen/Card/Button/Pill/StatusChip/Field/Input).
+- **Screens:** `_layout.tsx` (Stack + AuthProvider), `index.tsx` (hero + featured list), `search.tsx` (area pills + date/time/hours + **check-many** filter), `spaces/[id].tsx` (booking pane → createBooking → Checkout Session → `WebBrowser.openBrowserAsync` + poll paymentStatus up to 90s → `/bookings`; deep link `kicknap://booking-result`/`kicknap://search`), `login.tsx`, `register.tsx`, `bookings.tsx` (guestEmail-filtered list + status chips + sign out).
+- **Verified:** `npx tsc --noEmit` clean; ESLint (eslint-config-expo) clean. ESLint auto-configured on first `expo lint`.
+- Booking flow constant: mobile book → Stripe **hosted Checkout** (no PaymentSheet) → poll — no server changes required.
+- Cannot run in an emulator here — run `npm run ios`/`android` (or Expo Go) on a device; base URLs come from `.env` (`apps/mobile/.env.example`).
 
 ## 1. Implemented Production System (LIVE)
 
@@ -292,11 +301,12 @@ All files at: `C:\Users\antoi\Documents\Default Project\kicknap\`
 - **Git auto-deploy (optional):** user accepts GitHub↔Vercel integration per project (dashboard → Settings → Git → Connect). All 6 projects are separate.
 
 ### Autonomous next steps
-1. Search depth: availability-aware search (hide booked slots) + wire home hero search box
-2. Guard: dedupe/refund if a booking gets paid twice (payments row unique per booking)
+1. ✅ Availability-aware search (live) + home hero search box wired
+2. ✅ Double-payment guard (409 `already_paid`) — payment per booking enforced
 3. Profile page + (later) email verification
-4. Host cash-out math: payouts ledger per host + payouts.webhook handling for host_accounts updates (v2 accounts)
-5. Native iOS/Android app (6–8 wks) before host recruitment/marketing launch
+4. ✅ Host earnings ledger (live) — by-space + by-bookings + web BFF; host cash-out math next (payouts.webhook for host_accounts updates, v2 accounts)
+5. Native iOS/Android app — **in progress**: scaffold + core screens done, need on-device testing
+6. Vitest unit tests for price/date-time logic (mobile `format.ts` + services)
 
 ---
 *Last updated: August 2026*
