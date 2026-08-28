@@ -3,7 +3,7 @@ import { lang } from "next/root-params";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { requireHost } from "@/lib/host";
 import { serviceBaseUrl } from "@/lib/api";
-import { formatEuro } from "@/lib/format";
+import { formatEuro, formatDateTime } from "@/lib/format";
 import type { HostSpacesResponse } from "@/lib/types/host";
 
 export default async function HostDashboardPage() {
@@ -62,8 +62,40 @@ export default async function HostDashboardPage() {
     payoutsError = true;
   }
 
+  type EarningsBooking = {
+    id: number;
+    spaceName: string;
+    neighborhood: string;
+    guestName: string;
+    fromIso: string;
+    toIso: string;
+    priceCents: number;
+    bookingStatus: string;
+    paymentStatus: string;
+    hostPayoutCents: number;
+  };
+  type EarningsResponse = {
+    totals: { bookings: number; paid: number; earnedCents: number };
+    bookings: EarningsBooking[];
+  };
+  let earnings: EarningsResponse | null = null;
+  let earningsError = false;
+  try {
+    const res = await fetch(`/api/host/earnings`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(8000),
+    });
+    if (res.ok) {
+      earnings = (await res.json()) as EarningsResponse;
+    } else {
+      earningsError = true;
+    }
+  } catch {
+    earningsError = true;
+  }
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
+    <div className="mx-auto max-w-4xl px-4 py-14 sm:px-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight text-navy-900">
@@ -102,6 +134,72 @@ export default async function HostDashboardPage() {
             </form>
           )}
         </div>
+
+        {earnings ? (
+          <div className="rounded-3xl border border-navy-100 bg-white p-6">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 className="font-semibold text-navy-900">{dict.host.earningsTitle}</h2>
+                <p className="mt-1 text-sm text-navy-600">{dict.host.earningsSubtitle}</p>
+              </div>
+              <p className="text-2xl font-semibold text-navy-900">
+                {formatEuro(earnings.totals.earnedCents)}
+              </p>
+            </div>
+            {earnings.totals.bookings === 0 ? (
+              <p className="mt-5 text-sm text-navy-600">{dict.host.earningsEmpty}</p>
+            ) : (
+              <div className="mt-5 overflow-x-auto rounded-2xl border border-navy-100">
+                <table className="w-full min-w-[560px] text-left text-sm">
+                  <thead className="bg-navy-50 text-xs uppercase tracking-wide text-navy-500">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold">{dict.host.earnSpace}</th>
+                      <th className="px-4 py-3 font-semibold">{dict.host.earnWhen}</th>
+                      <th className="px-4 py-3 font-semibold">{dict.host.earnGuest}</th>
+                      <th className="px-4 py-3 text-right font-semibold">{dict.host.earnAmount}</th>
+                      <th className="px-4 py-3 text-right font-semibold">{dict.host.earnStatus}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-navy-100">
+                    {earnings.bookings.map((b) => (
+                      <tr key={b.id}>
+                        <td className="px-4 py-3 text-navy-800">
+                          <span className="font-semibold">{b.spaceName}</span>
+                          <span className="ml-1 text-xs text-navy-500">{b.neighborhood}</span>
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-navy-700">
+                          {formatDateTime(b.fromIso, currentLang)}
+                        </td>
+                        <td className="px-4 py-3 text-navy-700">{b.guestName || "—"}</td>
+                        <td className="px-4 py-3 text-right font-semibold text-navy-900">
+                          {formatEuro(b.priceCents)}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <span
+                            className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                              b.paymentStatus === "succeeded"
+                                ? "bg-emerald-50 text-emerald-700"
+                                : b.paymentStatus === "failed"
+                                  ? "bg-red-50 text-red-600"
+                                  : "bg-navy-100 text-navy-600"
+                            }`}
+                          >
+                            {dict.host[`pay${b.paymentStatus}` as keyof typeof dict.host] ??
+                              b.paymentStatus}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        ) : earningsError ? (
+          <div className="rounded-3xl border border-navy-100 bg-navy-50/60 p-10 text-center text-navy-700">
+            {dict.host.earningsUnavailable}
+          </div>
+        ) : null}
 
         {fetchError ? (
           <div className="rounded-3xl border border-navy-100 bg-navy-50/60 p-10 text-center text-navy-700">
@@ -146,7 +244,16 @@ export default async function HostDashboardPage() {
                   >
                     {space.published ? dict.host.statusLive : dict.host.statusDraft}
                   </span>
-                  <p className="mt-3 text-sm font-medium text-navy-700">{dict.host.edit} →</p>
+                  <p className="mt-3 text-sm font-medium text-navy-700">
+                    <span className="text-navy-500">{dict.host.edit}</span>{" "}
+                    <span className="mx-1 text-navy-300">·</span>{" "}
+                    <Link
+                      href={`/${currentLang}/spaces/${space.id}`}
+                      className="inline-block transition-colors hover:text-navy-900"
+                    >
+                      {dict.host.publicPage} ↗
+                    </Link>
+                  </p>
                 </div>
               </div>
             </Link>

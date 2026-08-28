@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { and, eq, gt, lt } from "drizzle-orm";
+import { and, eq, gt, inArray, lt } from "drizzle-orm";
 import { bookings } from "../db/schema.js";
 import { db } from "../db/index.js";
 import { fetchSpace } from "../lib/listings.js";
@@ -136,6 +136,24 @@ v1.post("/bookings", async (c) => {
     },
     201
   );
+});
+
+// GET /api/v1/bookings/by-space?spaceIds=1,2,3  (server-to-server: all bookings for a host's spaces)
+// Registered before /bookings/:id so "by-space" is not captured as an id.
+v1.get("/bookings/by-space", async (c) => {
+  const spaceIds = String(c.req.query("spaceIds") ?? "")
+    .split(",")
+    .map((v) => Number(v.trim()))
+    .filter((id) => Number.isInteger(id) && id > 0);
+  if (!spaceIds.length) return c.json({ count: 0, bookings: [] });
+
+  const rows = await db
+    .select()
+    .from(bookings)
+    .where(inArray(bookings.spaceId, spaceIds))
+    .orderBy(bookings.fromTs);
+
+  return c.json({ count: rows.length, bookings: rows });
 });
 
 // GET /api/v1/bookings/:id

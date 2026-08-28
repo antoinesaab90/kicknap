@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import type Stripe from "stripe";
 import { payments, hostAccounts } from "../db/schema.js";
 import { db } from "../db/index.js";
@@ -103,6 +103,15 @@ v1.post("/payments/checkout", async (c) => {
   const booking = await fetchBooking(bookingId);
   if (!booking) return c.json({ error: "booking_not_found", bookingId }, 404);
 
+  const [existingPayment] = await db
+    .select({ id: payments.id, status: payments.status })
+    .from(payments)
+    .where(eq(payments.bookingId, bookingId))
+    .limit(1);
+  if (existingPayment && existingPayment.status === "succeeded") {
+    return c.json({ error: "already_paid", bookingId }, 409);
+  }
+
   const b = booking.booking;
   const fees = computeFees(b.priceCents);
   const { getStripe } = await import("../lib/stripe.js");
@@ -159,6 +168,20 @@ v1.get("/payments/bookings/:bookingId", async (c) => {
     .where(eq(payments.bookingId, bookingId))
     .limit(1);
   return c.json({ payment: payment ?? null });
+});
+
+// GET /api/v1/payments/by-bookings?ids=1,2,3  (server-to-server: payment rows for a set of bookings)
+v1.get("/payments/by-bookings", async (c) => {
+  const ids = String(c.req.query("ids") ?? "")
+    .split(",")
+    .map((v) => Number(v.trim()))
+    .filter((id) => Number.isInteger(id) && id > 0);
+  if (!ids.length) return c.json({ payments: [] });
+  const rows = await db
+    .select()
+    .from(payments)
+    .where(inArray(payments.bookingId, ids));
+  return c.json({ payments: rows });
 });
 
 // GET /api/v1/payments/accounts/:email — onboarded status of a host's Connect account
@@ -327,15 +350,18 @@ v1.post("/payments/webhook", async (c) => {
             .set({ status: "succeeded", updatedAt: new Date() })
             .where(eq(payments.id, existing[0].id));
         } else if (fees) {
-          await db.insert(payments).values({
-            bookingId,
-            stripePaymentIntentId: pi.id,
-            amountCents: fees.guestTotalCents,
-            guestFeeCents: fees.guestFeeCents,
-            hostFeeCents: fees.hostFeeCents,
-            hostPayoutCents: fees.hostPayoutCents,
-            status: "succeeded",
-          });
+          await db
+            .insert(payments)
+            .values({
+              bookingId,
+              stripePaymentIntentId: pi.id,
+              amountCents: fees.guestTotalCents,
+              guestFeeCents: fees.guestFeeCents,
+              hostFeeCents: fees.hostFeeCents,
+              hostPayoutCents: fees.hostPayoutCents,
+              status: "succeeded",
+            })
+            .onConflictDoNothing({ target: payments.bookingId });
         }
       }
       break;
