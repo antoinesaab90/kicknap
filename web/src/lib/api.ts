@@ -14,6 +14,22 @@ export function serviceBaseUrl(
   return map[name];
 }
 
+export async function serviceFetch(
+  name: "listings" | "availability" | "bookings" | "identity" | "payments",
+  path: string,
+  init?: RequestInit
+): Promise<Response> {
+  try {
+    return await fetch(`${serviceBaseUrl(name)}${path}`, {
+      ...init,
+      headers: { ...init?.headers },
+      cache: "no-store",
+    });
+  } catch {
+    return new Response(null, { status: 503 });
+  }
+}
+
 export async function fetchSpace(spaceId: number): Promise<SpaceDetailDto | null> {
   const res = await fetch(
     `${serviceBaseUrl("listings")}/api/v1/spaces/${spaceId}`,

@@ -45,6 +45,23 @@ export default async function HostDashboardPage() {
     fetchError = true;
   }
 
+  let payoutsReady = false;
+  let payoutsError = false;
+  try {
+    const res = await fetch(
+      `${serviceBaseUrl("payments")}/api/v1/payments/accounts/${encodeURIComponent(host.email)}`,
+      { cache: "no-store", signal: AbortSignal.timeout(8000) }
+    );
+    if (res.ok) {
+      const data = (await res.json()) as { account: { onboarded: boolean; payoutsEnabled: boolean } | null };
+      payoutsReady = data.account?.onboarded === true && data.account.payoutsEnabled === true;
+    } else if (res.status === 503) {
+      payoutsError = true;
+    }
+  } catch {
+    payoutsError = true;
+  }
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-14 sm:px-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -63,6 +80,29 @@ export default async function HostDashboardPage() {
       </div>
 
       <div className="mt-8 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-navy-100 bg-white p-6">
+          <div>
+            <h2 className="font-semibold text-navy-900">{dict.host.payoutsTitle}</h2>
+            <p className="mt-1 text-sm text-navy-600">{dict.host.payoutsText}</p>
+          </div>
+          {payoutsError ? (
+            <span className="text-sm font-medium text-navy-500">{dict.host.payoutsUnavailable}</span>
+          ) : payoutsReady ? (
+            <span className="inline-block rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-semibold text-emerald-700">
+              {dict.host.payoutsReady}
+            </span>
+          ) : (
+            <form action={`/api/host/payouts`} method="POST">
+              <button
+                type="submit"
+                className="rounded-full bg-navy-800 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700"
+              >
+                {dict.host.payoutsSetup}
+              </button>
+            </form>
+          )}
+        </div>
+
         {fetchError ? (
           <div className="rounded-3xl border border-navy-100 bg-navy-50/60 p-10 text-center text-navy-700">
             {dict.bookings.fetchError}

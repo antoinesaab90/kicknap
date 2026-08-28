@@ -217,6 +217,13 @@ All files at: `C:\Users\antoi\Documents\Default Project\kicknap\`
 - Rate limiting configured per endpoint
 - See `API_ENDPOINTS.md` for full API design
 
+## 1b. Session: host dashboard, payouts, emails, polish (Aug 28)
+- **Host space management live** (commit `90fe63b`): `[lang]/host` dashboard (login-gated, spaces list + status badges), `[lang]/host/new` + `[lang]/host/spaces/[id]` create/edit (ownership-checked via `?host=`), weekly-hours editor, publishing. BFF: `web/src/app/api/host/spaces[/[id]][/publish]` (requireHost, JWT). Header host link routes signed-in users to `/host`, guests to `/#host`. Public listings hide drafts (`published===true` gating on `GET /spaces` and `GET /spaces/:id`); internal `GET /api/v1/internal/host-spaces/:id?hostEmail=` returns any state with ownership check (backs availability `fetchOwnedSpace`).
+- **Stripe Connect payouts**: Accounts **v2** (`POST https://api.stripe.com/v2/core/accounts`, header `Stripe-Version: 2026-08-26.dahlia`) via raw fetch — installed `stripe@17.7.0` has `v2.core` but not `v2.core.accounts`. Onboarding link via v1 `accountLinks.create`. **Self-healing schema**: `services/payments/src/db/bootstrap.ts` `ensureHostAccounts()` runs idempotent `CREATE TABLE IF NOT EXISTS payments.host_accounts` once per warm instance. `POST /payments/accounts` idempotent-reuses; status GET reads `stripe_balance.payouts.status==="active"` as payoutsEnabled (cast via unknown). Web BFF `api/host/payouts` (GET status / POST→303 onboardingUrl); dashboard payouts card; dict `host.payouts*` en+nl; origin from `request.url`.
+- **Booking emails, SMTP-ready** (`services/bookings/src/lib/mail.ts` + `nodemailer@6.9.14`): `notifyBookingCreated` on booking create — guest confirmation + host new-booking notifications; lazy transporter; no-op unless SMTP env set; HTML-escaped templates. Listings `GET /spaces/:id` now returns `hostEmail` (leftJoin users).
+- **Home polish**: live featured-spaces strip (first 6 published, `SpaceCard`, `dict.featured.*` en+nl) between How-it-works and Testimonial; hero subtitle updated ("Live in Amsterdam").
+- E2E fully green end-to-end (search/detail/day/check/book/pay/login/web pages) on prod.
+
 ## 1. Implemented Production System (LIVE)
 
 > What actually runs today. All deployed to Vercel, branch `main`. Verified by `npm run smoke:prod` (15/15 pass).
@@ -274,16 +281,16 @@ All files at: `C:\Users\antoi\Documents\Default Project\kicknap\`
 ## 2. Pending Work (next sessions)
 
 ### Blocked on user (do first, they unlock me)
-- **Booking emails:** decide + provide SMTP for a transactional email service (Zoho Mail recommended; needs SPF/DKIM DNS records at the registrar for the sending domain). Then build service + send on booking create/complete.
+- **Booking emails:** SMTP module is built (`services/bookings/src/lib/mail.ts`, no-op until configured) — user needs to provide Zoho Mail SMTP creds (`EMAIL_SMTP_HOST/PORT/USER/PASS` + `EMAIL_FROM` env on bookings-sable-nine) and confirm SPF/DKIM DNS records for the sending domain. Then live sends happen automatically.
 - **Stripe:** delete the stray dashboard webhook destination (Workbench → Webhooks) in the wrong environment; later "Activate payouts" test with a fake host; go-live requires live-mode keys + verification (real money).
 - **Git auto-deploy (optional):** user accepts GitHub↔Vercel integration per project (dashboard → Settings → Git → Connect). All 6 projects are separate.
 
 ### Autonomous next steps
-1. Bookings page: show payment status per booking (paid/pending/failed) by joining payments service
-2. Hosts: Connect onboarding (`/payments/accounts`), host dashboard, listing creation UI (needs listings service CRUD write path)
-3. Search depth: availability-aware search (hide booked slots) + wire home hero search box
-4. Guard: dedupe/refund if a booking gets paid twice (payments row unique per booking)
-5. Profile page + (later) email verification
+1. Search depth: availability-aware search (hide booked slots) + wire home hero search box
+2. Guard: dedupe/refund if a booking gets paid twice (payments row unique per booking)
+3. Profile page + (later) email verification
+4. Host cash-out math: payouts ledger per host + payouts.webhook handling for host_accounts updates (v2 accounts)
+5. Native iOS/Android app (6–8 wks) before host recruitment/marketing launch
 
 ---
 *Last updated: August 2026*

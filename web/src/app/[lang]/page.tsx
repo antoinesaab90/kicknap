@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { lang } from "next/root-params";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { serviceBaseUrl } from "@/lib/api";
+import { SpaceCard } from "@/components/space-card";
+import type { SpacesResponse } from "@/lib/types/space";
 
 function SearchIcon({ className }: { className?: string }) {
   return (
@@ -14,6 +17,26 @@ function SearchIcon({ className }: { className?: string }) {
 export default async function HomePage() {
   const dict = await getDictionary();
   const currentLang = await lang();
+
+  let featured: SpacesResponse["spaces"] = [];
+  try {
+    const res = await fetch(
+      `${serviceBaseUrl("listings")}/api/v1/spaces`,
+      { cache: "no-store" }
+    );
+    if (res.ok) {
+      const data = (await res.json()) as SpacesResponse;
+      featured = data.spaces.slice(0, 6);
+    }
+  } catch {
+    featured = [];
+  }
+
+  const cardTexts = {
+    perHour: dict.search.perHour,
+    minHours: dict.search.minHours,
+    demoNote: dict.search.demoNote,
+  };
 
   return (
     <>
@@ -57,7 +80,7 @@ export default async function HomePage() {
           </div>
 
           <p className="mt-6 text-xs text-navy-600">
-            Kicknap is launching in Amsterdam. Bookings open soon.
+            Live in Amsterdam — book by the hour, pay online, no check-in ceremony.
           </p>
         </div>
       </section>
@@ -82,6 +105,39 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* Featured spaces */}
+      {featured.length > 0 && (
+        <section className="bg-navy-50/60">
+          <div className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <h2 className="text-3xl font-semibold tracking-tight text-navy-900">
+                  {dict.featured.title}
+                </h2>
+                <p className="mt-2 text-navy-600">{dict.featured.subtitle}</p>
+              </div>
+              <Link
+                href={`/${currentLang}/search`}
+                className="inline-flex items-center gap-1 rounded-full border border-navy-200 px-5 py-2.5 text-sm font-semibold text-navy-800 transition-colors hover:border-navy-400"
+              >
+                {dict.featured.viewAll}
+              </Link>
+            </div>
+            <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {featured.map((space) => (
+                <SpaceCard
+                  key={space.id}
+                  space={space}
+                  selected={false}
+                  texts={cardTexts}
+                  href={`/${currentLang}/spaces/${space.id}`}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Testimonial */}
       <section className="bg-gold-100/50">

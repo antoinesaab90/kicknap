@@ -41,6 +41,11 @@
       }
     ]
   },
+  "featured": {
+    "title": "Quiet corners, citywide",
+    "subtitle": "A live peek at what's bookable in Amsterdam right now.",
+    "viewAll": "Browse all spaces"
+  },
   "testimonial": {
     "quote": "\u201CI had a 6-hour layover at Schiphol. Booked a kicknap near Centraal. Shower, nap, fresh clothes. Best travel decision I ever made.\u201D",
     "author": "\u2014 Lisa, Berlin"
@@ -167,6 +172,11 @@
     "empty": "No spaces yet",
     "emptyText": "List your first space and start earning during work hours.",
     "listSpace": "List a space",
+    "payoutsTitle": "Payouts",
+    "payoutsText": "Receive your earnings directly to your bank account.",
+    "payoutsSetup": "Set up payouts",
+    "payoutsReady": "Payouts ready",
+    "payoutsUnavailable": "Payouts temporarily unavailable",
     "statusLive": "Live",
     "statusDraft": "Draft",
     "publicPage": "Public page",

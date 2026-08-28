@@ -41,6 +41,11 @@
       }
     ]
   },
+  "featured": {
+    "title": "Stille plekken door de stad",
+    "subtitle": "Een live blik op wat er nu boekbaar is in Amsterdam.",
+    "viewAll": "Bekijk alle ruimtes"
+  },
   "testimonial": {
     "quote": "\u201CIk had een tussenstop van zes uur op Schiphol. Ik boekte een kicknap vlak bij het Centraal Station. Douchen, dutje, frisse kleren. Beste reisbeslissing ooit.\u201D",
     "author": "\u2014 Lisa, Berlijn"
@@ -167,6 +172,11 @@
     "empty": "Nog geen ruimtes",
     "emptyText": "Voeg je eerste ruimte toe en verdien tijdens werkuren.",
     "listSpace": "Ruimte toevoegen",
+    "payoutsTitle": "Uitbetalingen",
+    "payoutsText": "Ontvang je inkomsten rechtstreeks op je bankrekening.",
+    "payoutsSetup": "Uitbetalingen instellen",
+    "payoutsReady": "Uitbetalingen klaar",
+    "payoutsUnavailable": "Uitbetalingen tijdelijk niet beschikbaar",
     "statusLive": "Live",
     "statusDraft": "Concept",
     "publicPage": "Openbare pagina",
