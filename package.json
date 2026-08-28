@@ -18,7 +18,9 @@
     "smoke:prod": "node scripts/smoke-prod.mjs"
   },
   "devDependencies": {
+    "@rolldown/binding-win32-x64-msvc": "^1.2.6",
     "concurrently": "^10.0.5",
-    "dependency-cruiser": "^18.2.0"
+    "dependency-cruiser": "^18.2.0",
+    "mobile": "file:apps/mobile"
   }
 }

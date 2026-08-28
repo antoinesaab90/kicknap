@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run"
   },
   "dependencies": {
     "maplibre-gl": "^6.6.0",
@@ -16,6 +17,7 @@
     "supercluster": "^9.0.0"
   },
   "devDependencies": {
+    "@rolldown/binding-win32-x64-msvc": "^1.2.6",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -24,6 +26,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   }
 }
