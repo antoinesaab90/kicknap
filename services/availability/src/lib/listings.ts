@@ -18,6 +18,16 @@ export async function fetchSpace(id: number): Promise<ListingSpace | null> {
   return data.space;
 }
 
+export async function fetchOwnedSpace(id: number, hostEmail: string): Promise<ListingSpace | null> {
+  const res = await fetch(
+    `${base}/api/v1/internal/host-spaces/${id}?hostEmail=${encodeURIComponent(hostEmail)}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) return null;
+  const data = (await res.json()) as { space: ListingSpace };
+  return data.space;
+}
+
 export async function fetchAllSpaces(): Promise<ListingSpace[]> {
   const res = await fetch(`${base}/api/v1/spaces`, { cache: "no-store" });
   if (!res.ok) return [];

@@ -69,10 +69,10 @@ export async function Header({ lang, dict }: { lang: string; dict: Dictionary })
             </Link>
           )}
           <Link
-            href={`/${lang}#host`}
+            href={signedIn ? `/${lang}/host` : `/${lang}#host`}
             className="hidden rounded-full bg-navy-800 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700 sm:inline-block"
           >
-            {dict.nav.listYourSpace}
+            {signedIn ? dict.nav.hostDashboard : dict.nav.listYourSpace}
           </Link>
         </div>
       </div>

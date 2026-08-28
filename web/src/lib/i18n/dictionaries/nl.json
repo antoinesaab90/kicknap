@@ -4,12 +4,13 @@
     "description": "kicknap is verhuur van ruimtes per uur in Amsterdam. Boek per uur een rustige kamer, studio of bureau. Geen hotel, geen overnachting \u2014 gewoon een paar uur om bij te tanken.",
     "ogDescription": "Vind per uur een ruimte in Amsterdam, een rustige kamer, studio of bureau. Boek in minuten, betaal per uur."
   },
-  "nav": {
-    "spaces": "Ruimtes",
-    "howItWorks": "Zo werkt het",
+"nav": {
+    "spaces": "Spaces",
+    "howItWorks": "Hoe het werkt",
     "login": "Inloggen",
     "listYourSpace": "Verhuur je ruimte",
     "myBookings": "Mijn boekingen",
+    "hostDashboard": "Host",
     "signOut": "Uitloggen"
   },
   "hero": {
@@ -58,7 +59,7 @@
       }
     ]
   },
-  "host": {
+  "hostCta": {
     "title": "Verhuur je ruimte",
     "text": "Een kamer die je overdag niet gebruikt? Verdien geld terwijl je werkt \u2014 geen enkele verandering in je leven.",
     "cta": "Word host"
@@ -158,6 +159,42 @@
     "notFoundTitle": "Ruimte niet gevonden",
     "notFoundText": "Deze ruimte bestaat niet of is niet meer beschikbaar."
   },
+  "host": {
+    "loginTitle": "Log in om ruimtes te beheren",
+    "loginText": "Je hebt een account nodig om een ruimte te verhuren.",
+    "title": "Host-dashboard",
+    "subtitle": "Jouw ruimtes, beschikbaarheid en uitbetalingen.",
+    "empty": "Nog geen ruimtes",
+    "emptyText": "Voeg je eerste ruimte toe en verdien tijdens werkuren.",
+    "listSpace": "Ruimte toevoegen",
+    "statusLive": "Live",
+    "statusDraft": "Concept",
+    "publicPage": "Openbare pagina",
+    "edit": "Bewerken",
+    "newTitle": "Ruimte toevoegen",
+    "editTitle": "Ruimte bewerken",
+    "back": "Terug naar dashboard",
+    "name": "Naam",
+    "description": "Beschrijving",
+    "address": "Straatadres",
+    "neighborhood": "Wijk",
+    "city": "Stad",
+    "hourlyPrice": "Prijs per uur (EUR)",
+    "minHours": "Minimum uren",
+    "maxHours": "Maximum uren",
+    "photoUrl": "Foto-URL",
+    "hours": "Openingstijden (Europe/Amsterdam)",
+    "closed": "Gesloten",
+    "open": "Opent",
+    "close": "Sluit",
+    "save": "Opslaan",
+    "saving": "Opslaan\u2026",
+    "saved": "Opgeslagen",
+    "failed": "Kon niet opslaan. Probeer het opnieuw.",
+    "publish": "Publiceren",
+    "unpublish": "Publicatie stoppen",
+    "days": ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"]
+  },
   "bookings": {
     "title": "Mijn boekingen",
     "subtitle": "Aankomende kicknaps, op \u00E9\u00E9n plek.",
@@ -169,6 +206,9 @@
     "paid": "Bedrag",
     "status": "Status",
     "confirmed": "Bevestigd",
+    "statusPaid": "Betaald",
+    "statusUnpaid": "Betaling vereist",
+    "statusFailed": "Betaling mislukt",
     "notLoggedInTitle": "Log in om je boekingen te zien",
     "fetchError": "We konden je boekingen niet laden. Probeer het over een moment opnieuw."
   },

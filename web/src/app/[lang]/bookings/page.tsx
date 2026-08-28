@@ -64,8 +64,21 @@ export default async function MyBookingsPage() {
 
   const rows = bookings === null ? [] : await Promise.all(
     bookings.map(async (booking) => {
-      const space = await fetchSpace(booking.spaceId);
-      return { booking, spaceName: space?.name ?? `#${booking.spaceId}` };
+      const spare = fetchSpace(booking.spaceId).then((space) => ({
+        name: space?.name ?? `#${booking.spaceId}`,
+      }));
+      const status = fetch(
+        `${serviceBaseUrl("payments")}/api/v1/payments/bookings/${booking.id}`,
+        { cache: "no-store" }
+      )
+        .then((res) => (res.ok ? res.json() : ({ payment: null } as { payment: unknown })))
+        .catch(() => ({ payment: null }) as { payment: unknown })
+        .then((data) => {
+          const p = (data as { payment?: { status?: string } }).payment;
+          return p?.status === "succeeded" ? "paid" : p?.status === "failed" ? "failed" : "unpaid";
+        });
+      const [space, paymentStatus] = await Promise.all([spare, status]);
+      return { booking, spaceName: space.name, paymentStatus };
     })
   );
 
@@ -91,7 +104,7 @@ export default async function MyBookingsPage() {
             </Link>
           </div>
         ) : (
-          rows.map(({ booking, spaceName }) => (
+          rows.map(({ booking, spaceName, paymentStatus }) => (
             <Link
               key={booking.id}
               href={`/${currentLang}/spaces/${booking.spaceId}`}
@@ -115,9 +128,19 @@ export default async function MyBookingsPage() {
                   <p className="text-lg font-semibold text-navy-900">
                     {formatEuro(booking.priceCents)}
                   </p>
-                  <span className="mt-2 inline-block rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                    {dict.bookings.confirmed}
-                  </span>
+                  {paymentStatus === "paid" ? (
+                    <span className="mt-2 inline-block rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                      {dict.bookings.statusPaid}
+                    </span>
+                  ) : paymentStatus === "failed" ? (
+                    <span className="mt-2 inline-block rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
+                      {dict.bookings.statusFailed}
+                    </span>
+                  ) : (
+                    <span className="mt-2 inline-block rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                      {dict.bookings.statusUnpaid}
+                    </span>
+                  )}
                 </div>
               </div>
             </Link>

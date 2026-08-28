@@ -10,6 +10,7 @@
     "login": "Log in",
     "listYourSpace": "List your space",
     "myBookings": "My bookings",
+    "hostDashboard": "Host",
     "signOut": "Sign out"
   },
   "hero": {
@@ -58,7 +59,7 @@
       }
     ]
   },
-  "host": {
+  "hostCta": {
     "title": "List your space",
     "text": "Got a room you're not using during the day? Earn money while you're at work \u2014 zero lifestyle change.",
     "cta": "Become a host"
@@ -158,6 +159,42 @@
     "notFoundTitle": "Space not found",
     "notFoundText": "This space doesn't exist or is no longer available."
   },
+  "host": {
+    "loginTitle": "Log in to manage spaces",
+    "loginText": "You need an account to list a space.",
+    "title": "Host dashboard",
+    "subtitle": "Your spaces, availability and payouts.",
+    "empty": "No spaces yet",
+    "emptyText": "List your first space and start earning during work hours.",
+    "listSpace": "List a space",
+    "statusLive": "Live",
+    "statusDraft": "Draft",
+    "publicPage": "Public page",
+    "edit": "Edit",
+    "newTitle": "List a space",
+    "editTitle": "Edit space",
+    "back": "Back to dashboard",
+    "name": "Name",
+    "description": "Description",
+    "address": "Street address",
+    "neighborhood": "Neighbourhood",
+    "city": "City",
+    "hourlyPrice": "Price per hour (EUR)",
+    "minHours": "Minimum hours",
+    "maxHours": "Maximum hours",
+    "photoUrl": "Photo URL",
+    "hours": "Opening hours (Europe/Amsterdam)",
+    "closed": "Closed",
+    "open": "Opens",
+    "close": "Closes",
+    "save": "Save",
+    "saving": "Saving\u2026",
+    "saved": "Saved",
+    "failed": "Couldn't save. Try again.",
+    "publish": "Publish",
+    "unpublish": "Unpublish",
+    "days": ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+  },
   "bookings": {
     "title": "My bookings",
     "subtitle": "Upcoming kicknaps, all in one place.",
@@ -169,6 +206,9 @@
     "paid": "Amount",
     "status": "Status",
     "confirmed": "Confirmed",
+    "statusPaid": "Paid",
+    "statusUnpaid": "Payment required",
+    "statusFailed": "Payment failed",
     "notLoggedInTitle": "Log in to see your bookings",
     "fetchError": "We couldn't load your bookings. Try again in a moment."
   },

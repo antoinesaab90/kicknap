@@ -1,6 +1,21 @@
 export function formatEuro(cents: number): string {
   const value = cents / 100;
-  return `€${Number.isInteger(value) ? value : value.toFixed(2)}`;
+  return `�'�${Number.isInteger(value) ? value : value.toFixed(2)}`;
+}
+
+export function minutesToTime(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+export function timeToMinutes(value: string): number | null {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value.trim());
+  if (!match) return null;
+  const h = Number(match[1]);
+  const m = Number(match[2]);
+  if (h < 0 || h > 23 || m < 0 || m > 59) return null;
+  return h * 60 + m;
 }
 
 const AMSTERDAM_TIME_ZONE = "Europe/Amsterdam";

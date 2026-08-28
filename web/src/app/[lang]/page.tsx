@@ -119,14 +119,14 @@ export default async function HomePage() {
       <section id="host" className="scroll-mt-20 bg-navy-900">
         <div className="mx-auto flex max-w-6xl flex-col items-center px-4 py-24 text-center sm:px-6">
           <h2 className="max-w-2xl text-3xl font-semibold tracking-tight text-white sm:text-4xl">
-            {dict.host.title}
+            {dict.hostCta.title}
           </h2>
-          <p className="mt-4 max-w-xl text-lg text-navy-100">{dict.host.text}</p>
+          <p className="mt-4 max-w-xl text-lg text-navy-100">{dict.hostCta.text}</p>
           <a
             href="mailto:hello@kicknap.com"
             className="mt-10 inline-flex items-center gap-2 rounded-full bg-gold px-8 py-4 text-base font-semibold text-navy-900 transition-colors hover:bg-gold-100"
           >
-            {dict.host.cta}
+            {dict.hostCta.cta}
           </a>
         </div>
       </section>
