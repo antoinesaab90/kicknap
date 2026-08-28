@@ -52,8 +52,6 @@ export default async function SearchPage({
 
   let spaces: SpacesResponse["spaces"] | null = null;
   let serviceError = false;
-  let timeFilter: { from: string; to: string; hours: number } | null = null;
-
   const listingsUrl = serviceBaseUrl("listings");
   const query = new URLSearchParams();
   if (state.area) query.set("area", state.area);
@@ -81,7 +79,6 @@ export default async function SearchPage({
     const hours = Number(state.hours);
     const fromIso = amsZonedIso(state.date, state.time);
     const toIso = new Date(Date.parse(fromIso) + hours * 3600_000).toISOString();
-    timeFilter = { from: fromIso, to: toIso, hours };
     try {
       const res = await fetch(
         `${serviceBaseUrl("availability")}/api/v1/check-many?from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}`,
