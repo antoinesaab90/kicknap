@@ -49,7 +49,7 @@
 - **Local dev:** Next.js 16.3.3 docs ONLY at `web\node_modules\next\dist\docs\` (breaking changes vs. older Next — `lang()`/`cookies()` async, `params` Promises, `proxy.ts` middleware). `proxy.ts` matcher excludes `/api/*`.
 
 ## Architecture Principles
-1. **Modular/microservice** — If one service fails, the whole platform doesn't crash
+1. **Modular monolith, deployed as serverless functions** — One repo, one shared Postgres, clean domain modules (listings / availability / bookings / identity / payments) split across Vercel deploys. This is NOT classic microservices (no per-service DBs, queues, orchestration, multi-repo). Decision of Aug 2026: **keep as-is; no new services.** New features go inside an existing domain or the web app. If a new boundary ever proves necessary, it can be split out later — the seams already exist.
 2. **Everything async where possible** — Don't block the user
 3. **Fail gracefully** — Show friendly errors, never crash the UI
 4. **Security first** — Never store secrets in code, always use env vars
