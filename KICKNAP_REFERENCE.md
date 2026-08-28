@@ -40,7 +40,7 @@
 
 ## Tech Stack
 - **Web:** React / Next.js 16.3.3 (App Router + Turbopack, React 19) — **live**
-- **App later:** React Native — **in progress**: Expo SDK 57 app scaffolded at `apps/mobile` (see §1d)
+- **App later:** React Native — **in progress**: Expo SDK 54 app scaffolded at `apps/mobile` (see §1d)
 - **API:** Hono (TypeScript) microservices — **live**
 - **Database:** PostgreSQL on Neon (`neondb`, eu-central-1), Drizzle ORM 0.45.2 + postgres-js — **live**
 - **Payments:** Stripe Payments + Connect via Stripe Checkout + webhook — **live in test mode** (keys + webhook destination set)
@@ -179,7 +179,7 @@ All files at: `C:\Users\antoi\Documents\Default Project\kicknap\`
 - **Session 11:** Booking flow end-to-end (space detail + booking widget, availability + price, auth login/logout), payments service scaffold (Stripe), infra tooling (`deploy:prod`, `smoke:prod`), drizzle-orm 0.44→0.45.2 security patch
 - **Session 12:** Final checks, redeploy of all 6 apps (drizzle 0.45.2), smoke 15/15, `git commit 2d6f80c` + push, **self-service registration** (`/register`, BFF route), live verification, `git commit 020c6fe` + push
 - **Session 13:** **Payments live end-to-end (test mode)**: Stripe account (Learnix, Payments + Connect) set up by user with guidance; test keys + Connect client ID + webhook secret added to `payments` Vercel env; payments service `POST /payments/checkout` (Stripe Checkout hosted page, iDeal + cards), `POST /payments/webhook` (v1 snapshot events, signature verify); web `/api/checkout` BFF + "Pay now" step in booking widget (redirect flow). Verified live: booking → Checkout → successful payment → webhook → payments row `succeeded` (€17.16). doc + `git commit b+` pushed.
-- **Session 14 (cont. Aug 28):** availability-aware search (**Part A**), double-payment guard (**Part B**), host earnings ledger (**Part C**) — all live (see §1c), commits `30c284a` + `b000927` pushed. **Native app scaffolded:** Expo SDK 57 in `apps/mobile` (see §1d).
+- **Session 14 (cont. Aug 28):** availability-aware search (**Part A**), double-payment guard (**Part B**), host earnings ledger (**Part C**) — all live (see §1c), commits `30c284a` + `b000927` pushed. **Native app scaffolded:** Expo SDK 57 in `apps/mobile`, then **downgraded to SDK 54** to match App Store Expo Go (see §1d).
 
 ## Production Architecture
 - **9 services (bubbles):** Auth, Listing, Booking, Payment, Pricing, Notification, Search, Review, Admin
@@ -232,12 +232,12 @@ All files at: `C:\Users\antoi\Documents\Default Project\kicknap\`
 - E2E fully green end-to-end (search/detail/day/check/book/pay/login/web pages) on prod.
 
 ## 1d. Session: native app scaffold (Aug 28)
-- **Expo SDK 57 app** at `apps/mobile` (`create-expo-app --template default`; expo ~57.0.18, expo-router/entry, RN 0.86.3, React 19.2.3, TS ~6.0.3). App name/slug/scheme `kicknap`; `experiments`: `typedRoutes:false` (dynamic pushes), `reactCompiler:true`; paths `@/*` → `./src/*`. Deps added: `expo-secure-store` (~57.0.2; expo-web-browser already in template).
+- **Expo SDK 54 app** at `apps/mobile` (create-expo-app template then **downgraded 57 → 54**): SDK 54 was scaffolded as 57, but App Store Expo Go supports only **SDK 54** → "Project is incompatible with this version of Expo Go" on scan. Fixed via `expo install expo@^54.0.0` + `expo install --fix`, then `.npmrc` `legacy-peer-deps=true` (expo-router@6 peerOptional react-server-dom-webpack auto-resolves to 19.2.8 vs react 19.1.0 → ERESOLVE). Final: expo ~54.0.37, expo-router ~6.0.24, RN 0.81.5, React 19.1.0, TS ~5.9.2, eslint-config-expo ~10.0.0. `expo install --check` = "Dependencies are up to date"; tsc + ESLint clean. App name/slug/scheme `kicknap`; `experiments`: typedRoutes false, reactCompiler true; paths `@/*` → `./src/*`. Mobile `AGENTS.md` now points at v54 docs and warns against SDK bumps ahead of Expo Go.
 - **Foundation written:** `src/lib/theme.ts` (navy/gold, spacing, radius), `src/lib/types.ts`, `src/lib/api.ts` (ENV-driven base URLs via `EXPO_PUBLIC_LISTINGS/AVAILABILITY/BOOKINGS/IDENTITY/PAYMENTS_URL`; listSpaces/checkMany/fetchSpace/login/register/me/createBooking/createCheckout/paymentStatus/myBookings), `src/lib/format.ts` (**DST-safe** amsOffsetMinutes — last Sun Mar/Oct EU rule, manual — amsZonedIso, formatEuro `\u20ac`, formatAmsterdam/amsTimeLabel), `src/lib/auth.tsx` (AuthProvider; SecureStore `kn_token`/`kn_email`), `src/components/ui.tsx` (Screen/Card/Button/Pill/StatusChip/Field/Input).
 - **Screens:** `_layout.tsx` (Stack + AuthProvider), `index.tsx` (hero + featured list), `search.tsx` (area pills + date/time/hours + **check-many** filter), `spaces/[id].tsx` (booking pane → createBooking → Checkout Session → `WebBrowser.openBrowserAsync` + poll paymentStatus up to 90s → `/bookings`; deep link `kicknap://booking-result`/`kicknap://search`), `login.tsx`, `register.tsx`, `bookings.tsx` (guestEmail-filtered list + status chips + sign out).
-- **Verified:** `npx tsc --noEmit` clean; ESLint (eslint-config-expo) clean. ESLint auto-configured on first `expo lint`.
+- **Verified:** `npx tsc --noEmit` clean; ESLint (eslint-config-expo) clean.
 - Booking flow constant: mobile book → Stripe **hosted Checkout** (no PaymentSheet) → poll — no server changes required.
-- Cannot run in an emulator here — run `npm run ios`/`android` (or Expo Go) on a device; base URLs come from `.env` (`apps/mobile/.env.example`).
+- Run: double-click `start-kicknap.cmd` in `apps/mobile` (opens expo start QR), scan with iPhone camera/Expo Go. Base URLs from `.env` (`apps/mobile/.env.example`). User's phone: Expo Go from App Store = SDK 54.
 
 ## 1. Implemented Production System (LIVE)
 
