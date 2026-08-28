@@ -180,6 +180,7 @@ All files at: `C:\Users\antoi\Documents\Default Project\kicknap\`
 - **Session 12:** Final checks, redeploy of all 6 apps (drizzle 0.45.2), smoke 15/15, `git commit 2d6f80c` + push, **self-service registration** (`/register`, BFF route), live verification, `git commit 020c6fe` + push
 - **Session 13:** **Payments live end-to-end (test mode)**: Stripe account (Learnix, Payments + Connect) set up by user with guidance; test keys + Connect client ID + webhook secret added to `payments` Vercel env; payments service `POST /payments/checkout` (Stripe Checkout hosted page, iDeal + cards), `POST /payments/webhook` (v1 snapshot events, signature verify); web `/api/checkout` BFF + "Pay now" step in booking widget (redirect flow). Verified live: booking → Checkout → successful payment → webhook → payments row `succeeded` (€17.16). doc + `git commit b+` pushed.
 - **Session 14 (cont. Aug 28):** availability-aware search (**Part A**), double-payment guard (**Part B**), host earnings ledger (**Part C**) — all live (see §1c), commits `30c284a` + `b000927` pushed. **Native app scaffolded:** Expo SDK 57 in `apps/mobile`, then **downgraded to SDK 54** to match App Store Expo Go (see §1d).
+- **Session 15 (Aug 29, overnight autonomous):** Vitest unit tests (31 green, caught+d fixed a DST off-by-one), mobile UX hardening (deep links, retry/pull-to-refresh, validation), web cleanup, Vercel install fix (win32 binding → optional), web redeploy + `smoke:prod` 15/15 (see §1e).
 
 ## Production Architecture
 - **9 services (bubbles):** Auth, Listing, Booking, Payment, Pricing, Notification, Search, Review, Admin
@@ -238,6 +239,14 @@ All files at: `C:\Users\antoi\Documents\Default Project\kicknap\`
 - **Verified:** `npx tsc --noEmit` clean; ESLint (eslint-config-expo) clean.
 - Booking flow constant: mobile book → Stripe **hosted Checkout** (no PaymentSheet) → poll — no server changes required.
 - Run: double-click `start-kicknap.cmd` in `apps/mobile` (opens expo start QR), scan with iPhone camera/Expo Go. Base URLs from `.env` (`apps/mobile/.env.example`). User's phone: Expo Go from App Store = SDK 54.
+
+## 1e. Session: unit tests + mobile hardening (Aug 29, autonomous overnight)
+- **Vitest introduced** (both `web` and `apps/mobile`, `test` scripts added; `vitest.config.ts` aliases `@` → `./src`). Windows-only binding fix: `@rolldown/binding-win32-x64-msvc` moved to `optionalDependencies` after it **broke the Vercel (Linux) `npm install`** (`EOSNOTSUP` on a win32-only hard dep).
+- **31 unit tests green** (16 web + 15 mobile) covering DST boundaries 2025/2026/2027, `amsZonedIso`↔`amsTimeLabel` round-trips, euro formatting, `minutesToTime`/`timeToMinutes`. **Tests caught a real bug:** mobile's manual last-Sunday rule used `(day+1)%7` (landed on Monday) → off-by-one-day at every DST transition; fixed to `day`, now matches web's Intl-based ICU exactly.
+- **Mobile hardening:** deep-link handling for `kicknap://booking-result` (`_layout` via expo-linking → replace `/bookings`); success banner on bookings; retry buttons + pull-to-refresh on home/search/bookings; hour chips bounded by the space's `minHours`/`maxHours`; client-side validation (past dates, future start time, invalid times); friendly errors for `slot_conflict`/`already_paid`; checkout poll made resilient to `openBrowserAsync` not resolving in Expo Go (fire-and-forget + 120s poll).
+- **Web cleanup:** removed dead `timeFilter` var in `[lang]/search/page.tsx`.
+- **Integrity:** `npm run check` green (135 modules / 251 deps, no violations); web redeployed to `www.kicknap.com`; `smoke:prod` **15/15 PASS**. All service dependency trees verified after the root npm re-shuffle.
+- Commits during this session: `e11c6e9` (unit tests + DST fix), `f4c3983` (mobile hardening), `8c4bb5e` (web cleanup), `1f21d6f` (win32 binding optional). Pushed together at wrap-up.
 
 ## 1. Implemented Production System (LIVE)
 
