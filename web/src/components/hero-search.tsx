@@ -189,7 +189,7 @@ export function HeroSearch({
       active ? "bg-navy-50" : "hover:bg-navy-50"
     }`;
   const cellLabel =
-    "block text-[11px] font-semibold uppercase tracking-wide text-navy-400";
+    "block text-[11px] font-semibold uppercase tracking-wide text-navy-600";
   const cellValue = (placeholder: boolean) =>
     `mt-0.5 block truncate text-sm font-medium ${
       placeholder ? "text-navy-400" : "text-navy-900"
