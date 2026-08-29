@@ -198,6 +198,7 @@
     "payoutsUnavailable": "Payouts temporarily unavailable",
     "earningsTitle": "Bookings & earnings",
     "earningsSubtitle": "What guests have booked and what you earn.",
+    "earningsHint": "Amounts are what you receive. Guests pay the all-in total, including the 16% service fee.",
     "earningsEmpty": "No bookings yet — share your public page to invite guests.",
     "earningsUnavailable": "Earnings couldn't be loaded right now.",
     "earnSpace": "Space",

@@ -141,6 +141,7 @@ export default async function HostDashboardPage() {
               <div>
                 <h2 className="font-semibold text-navy-900">{dict.host.earningsTitle}</h2>
                 <p className="mt-1 text-sm text-navy-600">{dict.host.earningsSubtitle}</p>
+                <p className="mt-0.5 text-xs text-navy-500">{dict.host.earningsHint}</p>
               </div>
               <p className="text-2xl font-semibold text-navy-900">
                 {formatEuro(earnings.totals.earnedCents)}

@@ -118,6 +118,20 @@ await check("web /en/spaces/21", async () => {
   return "detail page ok";
 });
 
+await check("web /en/spaces/14 all-in price", async () => {
+  const r = await get(`${ENDPOINTS.web}/en/spaces/14`);
+  expectStatus(200, r.status);
+  if (!r.body.includes("€37.50")) throw new Error("all-in session price missing");
+  return "€37.50 shown";
+});
+
+await check("web /en/search all-in hourly price", async () => {
+  const r = await get(`${ENDPOINTS.web}/en/search`);
+  expectStatus(200, r.status);
+  if (!r.body.includes("€12.50")) throw new Error("all-in hourly price missing");
+  return "€12.50 shown";
+});
+
 await check("web /en/login", async () => {
   const r = await get(`${ENDPOINTS.web}/en/login`);
   expectStatus(200, r.status);

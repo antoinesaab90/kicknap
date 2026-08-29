@@ -198,6 +198,7 @@
     "payoutsUnavailable": "Uitbetalingen tijdelijk niet beschikbaar",
     "earningsTitle": "Boekingen & inkomsten",
     "earningsSubtitle": "Wat gasten hebben geboekt en wat jij verdient.",
+    "earningsHint": "De bedragen zijn wat jij ontvangt. Gasten betalen het totaal, inclusief 16% servicekosten.",
     "earningsEmpty": "Nog geen boekingen \u2014 deel je openbare pagina om gasten uit te nodigen.",
     "earningsUnavailable": "Inkomsten konden nu niet worden geladen.",
     "earnSpace": "Ruimte",
