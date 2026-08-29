@@ -40,13 +40,6 @@ export default async function SpacePage({
   }
 
   const texts: BookingTexts = {
-    date: dict.space.date,
-    from: dict.space.from,
-    duration: dict.space.duration,
-    hours: dict.space.hours,
-    check: dict.space.check,
-    checking: dict.space.checking,
-    available: dict.space.available,
     unavailable: dict.space.unavailable,
     reason_outside_opening_hours: dict.space.reason_outside_opening_hours,
     reason_no_opening_hours: dict.space.reason_no_opening_hours,
@@ -73,6 +66,17 @@ export default async function SpacePage({
     breakdownFee: dict.space.breakdownFee,
     breakdownTotal: dict.space.breakdownTotal,
     fixedSession: dict.space.fixedSession,
+    pickDayHint: dict.space.pickDayHint,
+    sessionAvailable: dict.space.sessionAvailable,
+    startTime: dict.space.startTime,
+    endTime: dict.space.endTime,
+    noSession: dict.space.noSession,
+    noFreeTime: dict.space.noFreeTime,
+    legendAvailable: dict.space.legendAvailable,
+    legendBooked: dict.space.legendBooked,
+    legendClosed: dict.space.legendClosed,
+    prevMonth: dict.space.prevMonth,
+    nextMonth: dict.space.nextMonth,
   };
 
   const isFixed = space.minHours === space.maxHours;

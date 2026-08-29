@@ -140,13 +140,6 @@
   "space": {
     "about": "Over deze ruimte",
     "location": "Locatie",
-    "date": "Datum",
-    "from": "Starttijd",
-    "duration": "Duur",
-    "hours": "uur",
-    "check": "Controleer beschikbaarheid",
-    "checking": "Controleren\u2026",
-    "available": "Dit tijdslot is vrij \u2014 je kunt het meteen boeken.",
     "unavailable": "Niet beschikbaar op de gekozen tijd.",
     "reason_outside_opening_hours": "Buiten openingstijden. Probeer tussen 08:00 en 22:00.",
     "reason_no_opening_hours": "Geen openingstijden ingesteld voor deze dag.",
@@ -178,7 +171,18 @@
     "breakdownVat": "btw 21% (inclusief)",
     "breakdownFee": "Boekingskosten 10%",
     "breakdownTotal": "Totaal dat je betaalt",
-    "fixedSession": "Vaste {h}u sessie"
+    "fixedSession": "Vaste {h}u sessie",
+    "pickDayHint": "Kies hierboven een dag om de beschikbare tijden te zien.",
+    "sessionAvailable": "Beschikbare sessie",
+    "startTime": "Starttijd",
+    "endTime": "Eindtijd",
+    "noSession": "Geen vrije sessie meer op deze dag.",
+    "noFreeTime": "Geen vrije tijd meer op deze dag.",
+    "legendAvailable": "Beschikbaar",
+    "legendBooked": "Geboekt",
+    "legendClosed": "Gesloten",
+    "prevMonth": "Vorige maand",
+    "nextMonth": "Volgende maand"
   },
   "host": {
     "loginTitle": "Log in om ruimtes te beheren",

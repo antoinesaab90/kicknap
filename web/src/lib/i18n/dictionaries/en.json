@@ -140,13 +140,6 @@
   "space": {
     "about": "About this space",
     "location": "Location",
-    "date": "Date",
-    "from": "Start time",
-    "duration": "Duration",
-    "hours": "hours",
-    "check": "Check availability",
-    "checking": "Checking\u2026",
-    "available": "This time slot is free \u2014 you can book it.",
     "unavailable": "Not available for the selected time.",
     "reason_outside_opening_hours": "Outside opening hours. Try between 08:00 and 22:00.",
     "reason_no_opening_hours": "No opening hours set for this day.",
@@ -178,7 +171,18 @@
     "breakdownVat": "VAT 21% (included)",
     "breakdownFee": "Booking fee 10%",
     "breakdownTotal": "Total you pay",
-    "fixedSession": "Fixed {h}h session"
+    "fixedSession": "Fixed {h}h session",
+    "pickDayHint": "Pick a day above to see its available times.",
+    "sessionAvailable": "Available session",
+    "startTime": "Start time",
+    "endTime": "End time",
+    "noSession": "No free session left on this day.",
+    "noFreeTime": "No free time left on this day.",
+    "legendAvailable": "Available",
+    "legendBooked": "Booked",
+    "legendClosed": "Closed",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month"
   },
   "host": {
     "loginTitle": "Log in to manage spaces",
