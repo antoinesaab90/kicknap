@@ -36,4 +36,8 @@ export type BookingErrorCode =
   | "shorter_than_min"
   | "longer_than_max"
   | "no_opening_hours"
-  | "outside_opening_hours";
+  | "outside_opening_hours"
+  | "invalid_guests"
+  | "adults_exceeded"
+  | "children_exceeded"
+  | "pets_not_allowed";

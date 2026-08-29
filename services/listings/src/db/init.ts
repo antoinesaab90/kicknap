@@ -30,6 +30,9 @@ CREATE TABLE IF NOT EXISTS listings.spaces (
   hourly_price_cents integer NOT NULL,
   min_hours integer NOT NULL DEFAULT 1,
   max_hours integer NOT NULL DEFAULT 12,
+  max_adults integer NOT NULL DEFAULT 4,
+  max_children integer NOT NULL DEFAULT 2,
+  pets_allowed boolean NOT NULL DEFAULT true,
   rating double precision NOT NULL DEFAULT 0,
   times_rated integer NOT NULL DEFAULT 0,
   photo_url text,
@@ -41,6 +44,11 @@ CREATE TABLE IF NOT EXISTS listings.spaces (
 CREATE INDEX IF NOT EXISTS listings_spaces_neighborhood_idx ON listings.spaces (neighborhood);
 CREATE INDEX IF NOT EXISTS listings_spaces_price_idx ON listings.spaces (hourly_price_cents);
 CREATE INDEX IF NOT EXISTS listings_spaces_city_idx ON listings.spaces (city);
+
+-- Idempotent migrations for existing databases
+ALTER TABLE listings.spaces ADD COLUMN IF NOT EXISTS max_adults integer NOT NULL DEFAULT 4;
+ALTER TABLE listings.spaces ADD COLUMN IF NOT EXISTS max_children integer NOT NULL DEFAULT 2;
+ALTER TABLE listings.spaces ADD COLUMN IF NOT EXISTS pets_allowed boolean NOT NULL DEFAULT true;
 
 CREATE TABLE IF NOT EXISTS listings.reviews (
   id serial PRIMARY KEY,

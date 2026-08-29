@@ -7,6 +7,9 @@ export interface ListingSpace {
   hourlyPriceCents: number;
   minHours: number;
   maxHours: number;
+  maxAdults: number;
+  maxChildren: number;
+  petsAllowed: boolean;
 }
 
 const base = process.env.SERVICE_LISTINGS_URL ?? "http://localhost:3001";

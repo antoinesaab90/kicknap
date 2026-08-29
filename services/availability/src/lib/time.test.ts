@@ -3,6 +3,8 @@ import {
   amsDayMinute,
   amsMinutesOfDay,
   dateDayOfWeek,
+  flexCoveredAt,
+  flexOffsets,
   windowCovered,
   type OpeningRule,
 } from "./time.js";
@@ -162,5 +164,57 @@ describe("windowCovered", () => {
         rules
       )
     ).toBe(true);
+  });
+});
+
+describe("flexOffsets", () => {
+  it("returns the exact start first, then symmetric 1-hour steps outward", () => {
+    expect(flexOffsets(0)).toEqual([0]);
+    expect(flexOffsets(120)).toEqual([0, -60, 60, -120, 120]);
+    expect(flexOffsets(240)).toEqual([0, -60, 60, -120, 120, -180, 180, -240, 240]);
+  });
+
+  it("rounds a non-hour budget up to whole hours", () => {
+    expect(flexOffsets(90)).toEqual([0, -60, 60, -120, 120]);
+  });
+});
+
+describe("flexCoveredAt", () => {
+  // Rule like demo space 14: Monday 13:00-16:00 local (CEST, UTC+2 in August).
+  const rules = [rule(1, 13 * 60, 16 * 60)];
+
+  it("resolves a window that starts too early by shifting +1h", () => {
+    // Mon 12:30 -> 14:30 local: starts before opening, not covered exactly.
+    expect(
+      windowCovered(Date.parse("2026-08-31T10:30:00Z"), Date.parse("2026-08-31T12:30:00Z"), rules)
+    ).toBe(false);
+    const result = flexCoveredAt(
+      Date.parse("2026-08-31T10:30:00Z"),
+      Date.parse("2026-08-31T12:30:00Z"),
+      rules,
+      60
+    );
+    expect(result).toEqual({ covered: true, shiftMinutes: 60 });
+  });
+
+  it("prefers the exact start over any shift", () => {
+    const allDay = [rule(1, 10 * 60, 18 * 60)];
+    const result = flexCoveredAt(
+      Date.parse("2026-08-31T10:00:00Z"), // Mon 12:00 local
+      Date.parse("2026-08-31T12:00:00Z"), // Mon 14:00 local
+      allDay,
+      240
+    );
+    expect(result).toEqual({ covered: true, shiftMinutes: 0 });
+  });
+
+  it("stays unavailable when no shift fits", () => {
+    const result = flexCoveredAt(
+      Date.parse("2026-09-01T10:30:00Z"), // Tue — no rule at all
+      Date.parse("2026-09-01T12:30:00Z"),
+      rules,
+      240
+    );
+    expect(result).toEqual({ covered: false, shiftMinutes: 0 });
   });
 });

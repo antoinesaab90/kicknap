@@ -27,6 +27,9 @@ export interface BookingTexts {
   reason_longer_than_max: string;
   reason_already_booked: string;
   reason_space_not_found: string;
+  reason_adults_exceeded: string;
+  reason_children_exceeded: string;
+  reason_pets_not_allowed: string;
   total: string;
   perHour: string;
   book: string;
@@ -56,6 +59,10 @@ export interface BookingTexts {
   legendClosed: string;
   prevMonth: string;
   nextMonth: string;
+  guestsLabel: string;
+  guestsAdults: string;
+  guestsChildren: string;
+  guestsPets: string;
 }
 
 export function BookingPanel({
@@ -63,6 +70,9 @@ export function BookingPanel({
   hourlyRateCents,
   minHours,
   maxHours,
+  maxAdults,
+  maxChildren,
+  petsAllowed,
   lang,
   isLoggedIn,
   loginHref,
@@ -73,6 +83,9 @@ export function BookingPanel({
   hourlyRateCents: number;
   minHours: number;
   maxHours: number;
+  maxAdults: number;
+  maxChildren: number;
+  petsAllowed: boolean;
   lang: string;
   isLoggedIn: boolean;
   loginHref: string;
@@ -80,6 +93,9 @@ export function BookingPanel({
   texts: BookingTexts;
 }) {
   const router = useRouter();
+  const [adults, setAdults] = useState(1);
+  const [children, setChildren] = useState(0);
+  const [pets, setPets] = useState(0);
   const todayAms = useMemo(() => todayAmsterdamDate(), []);
   const initialMonth = useMemo(() => {
     const [y, m] = todayAms.split("-").map(Number);
@@ -239,6 +255,12 @@ export function BookingPanel({
         return texts.reason_already_booked;
       case "space_not_found":
         return texts.reason_space_not_found;
+      case "adults_exceeded":
+        return texts.reason_adults_exceeded.replace("{max}", String(maxAdults));
+      case "children_exceeded":
+        return texts.reason_children_exceeded.replace("{max}", String(maxChildren));
+      case "pets_not_allowed":
+        return texts.reason_pets_not_allowed;
       default:
         return texts.unavailable;
     }
@@ -259,7 +281,12 @@ export function BookingPanel({
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ spaceId, from: fromIso, to: toIso }),
+        body: JSON.stringify({
+          spaceId,
+          from: fromIso,
+          to: toIso,
+          guests: { adults, children, pets },
+        }),
       });
       if (res.status === 401) {
         router.push(loginHref);
@@ -451,6 +478,31 @@ export function BookingPanel({
         <p className="mt-4 text-sm text-navy-600">{texts.pickDayHint}</p>
       )}
 
+      <div className="mt-4 border-t border-navy-100 pt-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-navy-500">
+          {texts.guestsLabel}
+        </p>
+        <div className="mt-2 space-y-2">
+          <GuestRow
+            label={texts.guestsAdults}
+            value={adults}
+            min={1}
+            max={Math.max(1, maxAdults)}
+            onChange={setAdults}
+          />
+          <GuestRow
+            label={texts.guestsChildren}
+            value={children}
+            min={0}
+            max={Math.max(0, maxChildren)}
+            onChange={setChildren}
+          />
+          {petsAllowed && (
+            <GuestRow label={texts.guestsPets} value={pets} min={0} max={2} onChange={setPets} />
+          )}
+        </div>
+      </div>
+
       <div className="mt-4 flex items-center justify-between border-t border-navy-100 pt-4">
         <span className="text-sm text-navy-600">{texts.total}</span>
         <span className="flex items-center gap-2 text-navy-700">
@@ -523,6 +575,47 @@ export function BookingPanel({
 
       <p className="mt-4 text-xs leading-relaxed text-navy-600">{texts.bookingNote}</p>
     </Card>
+  );
+}
+
+function GuestRow({
+  label,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (next: number) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-navy-700">{label}</span>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          aria-label={`${label} −`}
+          disabled={value <= min}
+          onClick={() => onChange(Math.max(min, value - 1))}
+          className="flex h-7 w-7 items-center justify-center rounded-full border border-navy-200 text-navy-800 transition-colors hover:border-navy-400 disabled:opacity-40"
+        >
+          −
+        </button>
+        <span className="w-6 text-center text-sm font-semibold text-navy-900">{value}</span>
+        <button
+          type="button"
+          aria-label={`${label} +`}
+          disabled={value >= max}
+          onClick={() => onChange(Math.min(max, value + 1))}
+          className="flex h-7 w-7 items-center justify-center rounded-full border border-navy-200 text-navy-800 transition-colors hover:border-navy-400 disabled:opacity-40"
+        >
+          +
+        </button>
+      </div>
+    </div>
   );
 }
 

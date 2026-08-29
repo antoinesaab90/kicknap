@@ -49,6 +49,9 @@ export default async function SpacePage({
     reason_longer_than_max: dict.space.reason_longer_than_max,
     reason_already_booked: dict.space.reason_already_booked,
     reason_space_not_found: dict.space.reason_space_not_found,
+    reason_adults_exceeded: dict.space.reason_adults_exceeded,
+    reason_children_exceeded: dict.space.reason_children_exceeded,
+    reason_pets_not_allowed: dict.space.reason_pets_not_allowed,
     total: dict.space.total,
     perHour: dict.space.perHour,
     book: dict.space.book,
@@ -78,6 +81,10 @@ export default async function SpacePage({
     legendClosed: dict.space.legendClosed,
     prevMonth: dict.space.prevMonth,
     nextMonth: dict.space.nextMonth,
+    guestsLabel: dict.space.guestsLabel,
+    guestsAdults: dict.space.guestsAdults,
+    guestsChildren: dict.space.guestsChildren,
+    guestsPets: dict.space.guestsPets,
   };
 
   const isFixed = space.minHours === space.maxHours;
@@ -146,6 +153,13 @@ export default async function SpacePage({
               </h1>
               <p className="mt-2 text-navy-600">
                 {space.neighborhood} · {space.city}
+              </p>
+              <p className="mt-1 text-sm text-navy-600">
+                {dict.space.capacity
+                  .replace("{adults}", String(space.maxAdults))
+                  .replace("{children}", String(space.maxChildren))}
+                <span className="text-navy-400"> · </span>
+                {space.petsAllowed ? dict.space.petsAllowed : dict.space.petsNot}
               </p>
               {space.timesRated > 0 && (
                 <p className="mt-1 text-sm text-navy-700">
@@ -248,6 +262,9 @@ export default async function SpacePage({
             hourlyRateCents={space.hourlyPriceCents}
             minHours={space.minHours}
             maxHours={space.maxHours}
+            maxAdults={space.maxAdults}
+            maxChildren={space.maxChildren}
+            petsAllowed={space.petsAllowed}
             lang={currentLang}
             isLoggedIn={Boolean(session?.token)}
             loginHref={`/${currentLang}/login?next=/${currentLang}/spaces/${space.id}`}

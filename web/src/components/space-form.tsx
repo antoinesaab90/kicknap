@@ -38,6 +38,9 @@ export function SpaceForm({ mode, lang, dict, spaceId, initial, initialRules }: 
   );
   const [minHours, setMinHours] = useState(String(initial?.minHours ?? 1));
   const [maxHours, setMaxHours] = useState(String(initial?.maxHours ?? 8));
+  const [maxAdults, setMaxAdults] = useState(initial?.maxAdults ?? 4);
+  const [maxChildren, setMaxChildren] = useState(initial?.maxChildren ?? 2);
+  const [petsAllowed, setPetsAllowed] = useState(initial?.petsAllowed ?? true);
   const [photoUrl, setPhotoUrl] = useState(initial?.photoUrl ?? "");
   const [rules, setRules] = useState<OpeningRuleDto[]>(initialRules ?? DEFAULT_RULES());
   const [closedDays, setClosedDays] = useState<Record<number, boolean>>(() => {
@@ -107,6 +110,9 @@ export function SpaceForm({ mode, lang, dict, spaceId, initial, initialRules }: 
       hourlyPriceCents: Math.max(1, Math.round(Number(euros) * 100)),
       minHours: Math.max(1, Number(minHours) || 1),
       maxHours: Math.max(1, Number(maxHours) || 8),
+      maxAdults: Math.max(1, maxAdults),
+      maxChildren: Math.max(0, maxChildren),
+      petsAllowed,
       photoUrl: photoUrl || null,
     };
 
@@ -333,6 +339,54 @@ export function SpaceForm({ mode, lang, dict, spaceId, initial, initialRules }: 
       </div>
 
       <div>
+        <h2 className="text-lg font-semibold text-navy-900">{t.guests}</h2>
+        <p className="mt-1 text-sm text-navy-600">{t.guestsHint}</p>
+        <div className="mt-3 space-y-3 rounded-3xl border border-navy-200 p-4">
+          <Stepper
+            label={t.maxAdults}
+            value={maxAdults}
+            min={1}
+            max={20}
+            onChange={setMaxAdults}
+          />
+          <Stepper
+            label={t.maxChildren}
+            value={maxChildren}
+            min={0}
+            max={20}
+            onChange={setMaxChildren}
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-navy-700">{t.pets}</span>
+            <div className="flex overflow-hidden rounded-full border border-navy-200 text-sm font-medium">
+              <button
+                type="button"
+                onClick={() => setPetsAllowed(true)}
+                className={
+                  petsAllowed
+                    ? "bg-navy-800 px-4 py-1.5 text-white"
+                    : "px-4 py-1.5 text-navy-600 hover:bg-navy-50"
+                }
+              >
+                {t.petsYes}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPetsAllowed(false)}
+                className={
+                  petsAllowed
+                    ? "px-4 py-1.5 text-navy-600 hover:bg-navy-50"
+                    : "bg-navy-800 px-4 py-1.5 text-white"
+                }
+              >
+                {t.petsNo}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
         <h2 className="text-lg font-semibold text-navy-900">{t.hours}</h2>
         <div className="mt-3 overflow-hidden rounded-3xl border border-navy-200">
           {[0, 1, 2, 3, 4, 5, 6].map((day) => {
@@ -404,6 +458,47 @@ export function SpaceForm({ mode, lang, dict, spaceId, initial, initialRules }: 
         <LinkBack lang={lang} dict={dict} />
       </div>
     </form>
+  );
+}
+
+function Stepper({
+  label,
+  value,
+  min,
+  max,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (next: number) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm font-medium text-navy-700">{label}</span>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          aria-label={`${label} −`}
+          disabled={value <= min}
+          onClick={() => onChange(Math.max(min, value - 1))}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-navy-200 text-navy-800 transition-colors hover:border-navy-400 disabled:opacity-40"
+        >
+          −
+        </button>
+        <span className="w-6 text-center text-sm font-semibold text-navy-900">{value}</span>
+        <button
+          type="button"
+          aria-label={`${label} +`}
+          disabled={value >= max}
+          onClick={() => onChange(Math.min(max, value + 1))}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-navy-200 text-navy-800 transition-colors hover:border-navy-400 disabled:opacity-40"
+        >
+          +
+        </button>
+      </div>
+    </div>
   );
 }
 

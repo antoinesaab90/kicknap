@@ -2,6 +2,7 @@ import Link from "next/link";
 import { lang } from "next/root-params";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { SearchView } from "@/components/search-view";
+import { SearchLiveFilters } from "@/components/search-live-filters";
 import { serviceBaseUrl } from "@/lib/api";
 import { amsTimeLabel, amsZonedIso, localDateString } from "@/lib/format";
 import type { SpacesResponse } from "@/lib/types/space";
@@ -10,8 +11,27 @@ const AREAS = ["centrum", "oost", "west", "zuid", "noord", "schiphol"] as const;
 const MAX_OPTIONS = [10, 15, 20] as const;
 const SORTS = ["priceAsc", "priceDesc", "rating"] as const;
 const HOURS_OPTIONS = [1, 2, 3, 4, 6, 8] as const;
+const FLEX_OPTIONS = [0, 1, 2, 4] as const;
 
-type SearchState = { area?: string; max?: string; sort?: string; date?: string; time?: string; hours?: string };
+type SearchState = {
+  area?: string;
+  max?: string;
+  sort?: string;
+  date?: string;
+  time?: string;
+  hours?: string;
+  adults?: string;
+  children?: string;
+  pets?: string;
+  flex?: string;
+};
+
+function isIntIn(raw: string | undefined, lo: number, hi: number): string | undefined {
+  if (raw === undefined) return undefined;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < lo || n > hi) return undefined;
+  return String(n);
+}
 
 function parseSearchParams(raw: SearchState): SearchState {
   const parsed: SearchState = {};
@@ -23,6 +43,13 @@ function parseSearchParams(raw: SearchState): SearchState {
   if (raw.hours && (HOURS_OPTIONS as readonly number[]).includes(Number(raw.hours))) {
     parsed.hours = raw.hours;
   }
+  const adults = isIntIn(raw.adults, 1, 20);
+  if (adults && adults !== "1") parsed.adults = adults;
+  const children = isIntIn(raw.children, 0, 20);
+  if (children && children !== "0") parsed.children = children;
+  const pets = isIntIn(raw.pets, 0, 20);
+  if (pets && pets !== "0") parsed.pets = pets;
+  if (raw.flex && (FLEX_OPTIONS as readonly number[]).includes(Number(raw.flex))) parsed.flex = raw.flex;
   return parsed;
 }
 
@@ -35,6 +62,10 @@ function makeHref(currentLang: string, state: SearchState, override: SearchState
   if (merged.date) query.set("date", merged.date);
   if (merged.time) query.set("time", merged.time);
   if (merged.hours) query.set("hours", merged.hours);
+  if (merged.adults) query.set("adults", merged.adults);
+  if (merged.children) query.set("children", merged.children);
+  if (merged.pets) query.set("pets", merged.pets);
+  if (merged.flex) query.set("flex", merged.flex);
   const qs = query.toString();
   return `/${currentLang}/search${qs ? `?${qs}` : ""}`;
 }
@@ -57,6 +88,9 @@ export default async function SearchPage({
   if (state.area) query.set("area", state.area);
   if (state.max) query.set("max", state.max);
   if (state.sort) query.set("sort", state.sort);
+  if (state.adults) query.set("adults", state.adults);
+  if (state.children) query.set("children", state.children);
+  if (state.pets) query.set("pets", state.pets);
   const qs = query.toString();
 
   try {
@@ -79,9 +113,10 @@ export default async function SearchPage({
     const hours = Number(state.hours);
     const fromIso = amsZonedIso(state.date, state.time);
     const toIso = new Date(Date.parse(fromIso) + hours * 3600_000).toISOString();
+    const flexMin = state.flex ? Number(state.flex) * 60 : 0;
     try {
       const res = await fetch(
-        `${serviceBaseUrl("availability")}/api/v1/check-many?from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}`,
+        `${serviceBaseUrl("availability")}/api/v1/check-many?from=${encodeURIComponent(fromIso)}&to=${encodeURIComponent(toIso)}${flexMin > 0 ? `&flexMin=${flexMin}` : ""}`,
         { cache: "no-store" }
       );
       if (res.ok) {
@@ -114,6 +149,19 @@ export default async function SearchPage({
     list: dict.search.list,
     save: dict.cart.save,
     saved: dict.cart.saved,
+  };
+
+  const liveTexts = {
+    guests: dict.search.guests,
+    anyGuests: dict.search.anyGuests,
+    adults: dict.space.guestsAdults,
+    kids: dict.space.guestsChildren,
+    pets: dict.space.guestsPets,
+    flexibility: dict.hero.search.flexibility,
+    noFlex: dict.hero.search.noFlex,
+    flex1: dict.hero.search.flex1,
+    flex2: dict.hero.search.flex2,
+    flex4: dict.hero.search.flex4,
   };
 
   const pillLink = (url: string, label: string, active: boolean) => (
@@ -183,6 +231,22 @@ export default async function SearchPage({
         </div>
       </div>
 
+      {/* Live guest & flexibility filters (immediate updates) */}
+      <SearchLiveFilters
+        lang={currentLang}
+        area={state.area ?? ""}
+        max={state.max ?? ""}
+        sort={state.sort ?? ""}
+        date={state.date ?? ""}
+        time={state.time ?? ""}
+        hours={state.hours ?? "2"}
+        adults={state.adults ?? "1"}
+        kids={state.children ?? "0"}
+        pets={state.pets ?? "0"}
+        flex={state.flex ?? "0"}
+        texts={liveTexts}
+      />
+
       {/* Time availability filter */}
       <form
         method="get"
@@ -192,6 +256,10 @@ export default async function SearchPage({
         <input type="hidden" name="area" value={state.area ?? ""} />
         <input type="hidden" name="max" value={state.max ?? ""} />
         <input type="hidden" name="sort" value={state.sort ?? ""} />
+        <input type="hidden" name="adults" value={state.adults ?? ""} />
+        <input type="hidden" name="children" value={state.children ?? ""} />
+        <input type="hidden" name="pets" value={state.pets ?? ""} />
+        <input type="hidden" name="flex" value={state.flex ?? ""} />
         <div>
           <label htmlFor="f-date" className="block text-xs font-semibold uppercase tracking-wide text-navy-600">
             {dict.search.date}
@@ -263,7 +331,7 @@ export default async function SearchPage({
               {timeEmptied ? dict.search.availEmptyText : dict.search.emptyText}
             </p>
             <Link
-              href={href({ area: undefined, max: undefined, sort: undefined, date: undefined, time: undefined, hours: undefined })}
+              href={href({ area: undefined, max: undefined, sort: undefined, date: undefined, time: undefined, hours: undefined, adults: undefined, children: undefined, pets: undefined, flex: undefined })}
               className="mt-6 inline-block rounded-full bg-navy-800 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-navy-700"
             >
               {dict.search.clearFilters}

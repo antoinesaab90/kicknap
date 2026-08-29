@@ -11,7 +11,6 @@ export function Footer({ lang, dict }: { lang: string; dict: Dictionary }) {
             <p className="text-xl font-semibold tracking-tight text-navy-800">
               kick<span className="text-gold-600">nap</span>
             </p>
-            <p className="mt-2 text-sm text-navy-600">Call it home.</p>
             <p className="mt-8 text-xs text-navy-600">
               Learnix &middot; KvK 42119992 &middot; Amsterdam, Netherlands
             </p>

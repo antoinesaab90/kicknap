@@ -27,6 +27,7 @@ function parseBody(body: unknown): {
   to: string;
   guestEmail?: string;
   guestName?: string;
+  guests?: { adults: number; children: number; pets: number };
 } {
   const b = body as {
     spaceId?: unknown;
@@ -34,6 +35,7 @@ function parseBody(body: unknown): {
     to?: unknown;
     guestEmail?: unknown;
     guestName?: unknown;
+    guests?: unknown;
   };
   const spaceId = Number(b.spaceId);
   if (!Number.isInteger(spaceId) || spaceId <= 0) {
@@ -50,12 +52,29 @@ function parseBody(body: unknown): {
   const pick = (value: unknown) =>
     typeof value === "string" && value.trim() ? value.trim() : undefined;
 
+  let guests: { adults: number; children: number; pets: number } | undefined;
+  if (b.guests && typeof b.guests === "object") {
+    const g = b.guests as { adults?: unknown; children?: unknown; pets?: unknown };
+    const adults = Number(g.adults);
+    const children = Number(g.children);
+    const pets = Number(g.pets);
+    if (
+      !Number.isInteger(adults) || adults < 1 ||
+      !Number.isInteger(children) || children < 0 ||
+      !Number.isInteger(pets) || pets < 0
+    ) {
+      throw { status: 400, error: "invalid_guests" };
+    }
+    guests = { adults, children, pets: pets > 0 ? pets : 0 };
+  }
+
   return {
     spaceId,
     from: b.from,
     to: b.to,
     guestEmail: pick(b.guestEmail),
     guestName: pick(b.guestName),
+    guests,
   };
 }
 
@@ -67,6 +86,7 @@ v1.post("/bookings", async (c) => {
     to: string;
     guestEmail?: string;
     guestName?: string;
+    guests?: { adults: number; children: number; pets: number };
   };
   try {
     body = parseBody(await c.req.json());
@@ -80,6 +100,27 @@ v1.post("/bookings", async (c) => {
 
   const space = await fetchSpace(body.spaceId);
   if (!space) return c.json({ error: "space_not_found", spaceId: body.spaceId }, 404);
+
+  if (body.guests) {
+    if (body.guests.adults > space.maxAdults) {
+      return c.json(
+        { error: "adults_exceeded", spaceId: body.spaceId, maxAdults: space.maxAdults },
+        409
+      );
+    }
+    if (body.guests.children > space.maxChildren) {
+      return c.json(
+        { error: "children_exceeded", spaceId: body.spaceId, maxChildren: space.maxChildren },
+        409
+      );
+    }
+    if (body.guests.pets > 0 && !space.petsAllowed) {
+      return c.json(
+        { error: "pets_not_allowed", spaceId: body.spaceId },
+        409
+      );
+    }
+  }
 
   const check = await checkAvailability(body.spaceId, body.from, body.to);
   if (!check.available) {

@@ -114,3 +114,33 @@ export function windowCovered(
 
   return true;
 }
+
+// Candidate start-time shifts (in minutes) for a flexible window: prefer the
+// exact start, then symmetric 1-hour steps outward until the flex budget.
+export function flexOffsets(flexMin: number): number[] {
+  const offsets: number[] = [];
+  const hours = Math.ceil(flexMin / 60);
+  for (let i = 0; i <= hours; i++) {
+    if (i === 0) {
+      offsets.push(0);
+    } else {
+      offsets.push(-i * 60, i * 60);
+    }
+  }
+  return offsets;
+}
+
+// Window is covered by the rules at the exact start or at any flexible offset.
+export function flexCoveredAt(
+  fromMs: number,
+  toMs: number,
+  rules: (OpeningRule & { dayOfWeek: number })[],
+  flexMin: number
+): { covered: boolean; shiftMinutes: number } {
+  for (const offset of flexOffsets(flexMin)) {
+    if (windowCovered(fromMs + offset * 60000, toMs + offset * 60000, rules)) {
+      return { covered: true, shiftMinutes: offset };
+    }
+  }
+  return { covered: false, shiftMinutes: 0 };
+}

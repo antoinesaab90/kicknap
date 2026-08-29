@@ -7,6 +7,9 @@ export interface SpaceDto {
   lng: number;
   hourlyPriceCents: number;
   minHours: number;
+  maxAdults: number;
+  maxChildren: number;
+  petsAllowed: boolean;
   photoUrl: string | null;
   rating: number;
   timesRated: number;

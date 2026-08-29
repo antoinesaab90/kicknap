@@ -3,7 +3,7 @@ import { eq, inArray } from "drizzle-orm";
 import { openingHours } from "../db/schema.js";
 import { db } from "../db/index.js";
 import { fetchAllSpaces, fetchOwnedSpace, fetchSpace } from "../lib/listings.js";
-import { amsMinutesOfDay, dateDayOfWeek, windowCovered } from "../lib/time.js";
+import { amsMinutesOfDay, dateDayOfWeek, flexCoveredAt, windowCovered } from "../lib/time.js";
 import type { OpeningHour } from "../db/index.js";
 
 const v1 = new Hono();
@@ -51,11 +51,14 @@ v1.get("/check", async (c) => {
   });
 });
 
-// GET /api/v1/check-many?from=2026-08-28T08:00:00Z&to=2026-08-28T11:00:00Z
+// GET /api/v1/check-many?from=...&to=...&flexMin=120
 // Availability for every published space in one call (used by search filters).
+// flexMin = minutes the guest's start time may shift (±) before/after; a space is
+// available if any shift (1-hour steps) keeps the whole window inside opening hours.
 v1.get("/check-many", async (c) => {
   const from = c.req.query("from");
   const to = c.req.query("to");
+  const flexRaw = Number(c.req.query("flexMin"));
 
   if (!from || !to) return c.json({ error: "missing_from_or_to" }, 400);
 
@@ -64,6 +67,8 @@ v1.get("/check-many", async (c) => {
   if (!Number.isFinite(fromMs) || !Number.isFinite(toMs) || toMs <= fromMs) {
     return c.json({ error: "invalid_range" }, 400);
   }
+
+  const flexMin = Number.isInteger(flexRaw) && flexRaw > 0 ? flexRaw : 0;
 
   const spaces = await fetchAllSpaces();
   if (!spaces.length) return c.json({ from, to, results: [] });
@@ -93,11 +98,19 @@ v1.get("/check-many", async (c) => {
     if (!spaceRules.length) {
       return { spaceId: space.id, available: false, reason: "no_opening_hours" as const };
     }
-    const covered = windowCovered(fromMs, toMs, spaceRules);
+    const result = flexCoveredAt(fromMs, toMs, spaceRules, flexMin);
+    if (result.covered) {
+      return {
+        spaceId: space.id,
+        available: true,
+        reason: "available",
+        shiftMinutes: result.shiftMinutes,
+      };
+    }
     return {
       spaceId: space.id,
-      available: covered,
-      reason: covered ? ("available" as const) : ("outside_opening_hours" as const),
+      available: false,
+      reason: "outside_opening_hours",
     };
   });
 

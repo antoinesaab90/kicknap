@@ -29,5 +29,13 @@ CREATE INDEX IF NOT EXISTS reviews_space_idx ON listings.reviews (space_id);
 `);
 }
 
+export async function ensureCapacityColumns(): Promise<void> {
+  await client.unsafe(`
+ALTER TABLE listings.spaces ADD COLUMN IF NOT EXISTS max_adults integer NOT NULL DEFAULT 4;
+ALTER TABLE listings.spaces ADD COLUMN IF NOT EXISTS max_children integer NOT NULL DEFAULT 2;
+ALTER TABLE listings.spaces ADD COLUMN IF NOT EXISTS pets_allowed boolean NOT NULL DEFAULT true;
+`);
+}
+
 export type Space = typeof schema.spaces.$inferSelect;
 export type NewSpace = typeof schema.spaces.$inferInsert;

@@ -1,8 +1,8 @@
 import { Hono } from "hono";
-import { and, asc, desc, eq, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lte, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import { spaces, users, reviews } from "../db/schema.js";
-import { db, ensureReviewsTable } from "../db/index.js";
+import { db, ensureCapacityColumns, ensureReviewsTable } from "../db/index.js";
 
 export const AREAS = ["centrum", "oost", "west", "zuid", "noord", "schiphol"] as const;
 
@@ -15,6 +15,13 @@ async function ensureReviewsReady(): Promise<void> {
   if (reviewsEnsured) return;
   await ensureReviewsTable();
   reviewsEnsured = true;
+}
+
+let capacityEnsured = false;
+async function ensureCapacityReady(): Promise<void> {
+  if (capacityEnsured) return;
+  await ensureCapacityColumns();
+  capacityEnsured = true;
 }
 
 async function upsertHost(hostEmail: string): Promise<number> {
@@ -31,6 +38,9 @@ function parseSpaceBody(body: Record<string, unknown>) {
   const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
   const num = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : NaN);
   const int = (v: unknown) => (Number.isInteger(v) && (v as number) > 0 ? (v as number) : NaN);
+  const intNonNeg = (v: unknown) =>
+    Number.isInteger(v) && (v as number) >= 0 ? (v as number) : NaN;
+  const bool = (v: unknown) => (typeof v === "boolean" ? v : null);
   return {
     name: str(body.name) || null,
     description: str(body.description) || null,
@@ -42,15 +52,22 @@ function parseSpaceBody(body: Record<string, unknown>) {
     hourlyPriceCents: int(body.hourlyPriceCents),
     minHours: int(body.minHours),
     maxHours: int(body.maxHours),
+    maxAdults: intNonNeg(body.maxAdults),
+    maxChildren: intNonNeg(body.maxChildren),
+    petsAllowed: bool(body.petsAllowed),
     photoUrl: str(body.photoUrl) || null,
   };
 }
 
-// GET /api/v1/spaces?area=centrum&max=15&sort=priceAsc|priceDesc|rating | host=email
+// GET /api/v1/spaces?area=centrum&max=15&sort=priceAsc|priceDesc|rating&host=email
+//   &adults=2&children=0&pets=1 — capacity filters (authoritative: never return a space
+//   that can't host the party size, so guest requirements never clash with the listing).
 v1.get("/spaces", async (c) => {
   const area = c.req.query("area");
   const sort = c.req.query("sort");
   const hostEmail = c.req.query("host");
+
+  await ensureCapacityReady();
 
   if (hostEmail) {
     const [host] = await db.select({ id: users.id }).from(users).where(eq(users.email, hostEmail)).limit(1);
@@ -66,6 +83,19 @@ v1.get("/spaces", async (c) => {
   const conditions: SQL[] = [eq(spaces.published, true)];
   if (area && (AREAS as readonly string[]).includes(area)) {
     conditions.push(eq(spaces.neighborhood, area));
+  }
+
+  const adults = Number(c.req.query("adults"));
+  if (Number.isInteger(adults) && adults >= 1) {
+    conditions.push(gte(spaces.maxAdults, adults));
+  }
+  const children = Number(c.req.query("children"));
+  if (Number.isInteger(children) && children >= 1) {
+    conditions.push(gte(spaces.maxChildren, children));
+  }
+  const pets = Number(c.req.query("pets"));
+  if (Number.isInteger(pets) && pets >= 1) {
+    conditions.push(eq(spaces.petsAllowed, true));
   }
 
   const max = Number(c.req.query("max"));
@@ -95,6 +125,8 @@ v1.get("/spaces/:id", async (c) => {
   const id = Number(c.req.param("id"));
   if (!Number.isInteger(id)) return c.json({ error: "invalid_id" }, 400);
 
+  await ensureCapacityReady();
+
   const [space] = await db
     .select({
       id: spaces.id,
@@ -110,6 +142,9 @@ v1.get("/spaces/:id", async (c) => {
       hourlyPriceCents: spaces.hourlyPriceCents,
       minHours: spaces.minHours,
       maxHours: spaces.maxHours,
+      maxAdults: spaces.maxAdults,
+      maxChildren: spaces.maxChildren,
+      petsAllowed: spaces.petsAllowed,
       rating: spaces.rating,
       timesRated: spaces.timesRated,
       photoUrl: spaces.photoUrl,
@@ -232,6 +267,8 @@ v1.post("/spaces", async (c) => {
   if (!Number.isInteger(f.hourlyPriceCents) || f.hourlyPriceCents <= 0) {
     return c.json({ error: "invalid_price" }, 400);
   }
+  const maxAdults = Number.isInteger(f.maxAdults) && f.maxAdults > 0 ? f.maxAdults : 4;
+  const maxChildren = Number.isInteger(f.maxChildren) && f.maxChildren >= 0 ? f.maxChildren : 2;
 
   const hostId = await upsertHost(hostEmail);
 
@@ -249,6 +286,9 @@ v1.post("/spaces", async (c) => {
       hourlyPriceCents: f.hourlyPriceCents,
       minHours: Number.isInteger(f.minHours) ? f.minHours : 1,
       maxHours: Number.isInteger(f.maxHours) ? f.maxHours : 8,
+      maxAdults,
+      maxChildren,
+      petsAllowed: f.petsAllowed === null ? true : f.petsAllowed,
       photoUrl: f.photoUrl,
       published: false,
     })
@@ -271,6 +311,9 @@ v1.put("/spaces/:id", async (c) => {
       hostId: spaces.hostId,
       minHours: spaces.minHours,
       maxHours: spaces.maxHours,
+      maxAdults: spaces.maxAdults,
+      maxChildren: spaces.maxChildren,
+      petsAllowed: spaces.petsAllowed,
     })
     .from(spaces)
     .where(eq(spaces.id, id))
@@ -303,6 +346,10 @@ v1.put("/spaces/:id", async (c) => {
       hourlyPriceCents: f.hourlyPriceCents,
       minHours: Number.isInteger(f.minHours) ? f.minHours : space.minHours,
       maxHours: Number.isInteger(f.maxHours) ? f.maxHours : space.maxHours,
+      maxAdults: Number.isInteger(f.maxAdults) && f.maxAdults > 0 ? f.maxAdults : space.maxAdults,
+      maxChildren:
+        Number.isInteger(f.maxChildren) && f.maxChildren >= 0 ? f.maxChildren : space.maxChildren,
+      petsAllowed: f.petsAllowed === null ? space.petsAllowed : f.petsAllowed,
       photoUrl: f.photoUrl,
     })
     .where(eq(spaces.id, id))

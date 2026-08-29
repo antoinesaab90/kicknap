@@ -10,6 +10,9 @@ export interface HostSpaceDto {
   hourlyPriceCents: number;
   minHours: number;
   maxHours: number;
+  maxAdults: number;
+  maxChildren: number;
+  petsAllowed: boolean;
   photoUrl: string | null;
   published: boolean;
   createdAt: string;
