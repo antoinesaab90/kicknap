@@ -126,11 +126,11 @@ export function BookingCalendar({
               const cls = [
                 "flex h-10 w-10 items-center justify-center rounded-full text-sm transition-colors",
                 interactive
-                  ? "cursor-pointer text-black hover:bg-gold-100"
+                  ? "cursor-pointer font-medium text-black hover:bg-gold-100"
                   : "cursor-not-allowed",
-                info.state === "booked" ? "text-navy-300 line-through" : "",
-                info.state === "closed" ? "text-navy-200" : "",
-                info.state === "open" && info.past ? "text-navy-200" : "",
+                info.state === "booked" ? "text-navy-100 line-through decoration-navy-300" : "",
+                info.state === "closed" ? "text-navy-100" : "",
+                info.state === "open" && info.past ? "text-navy-100" : "",
                 isSelected ? "bg-gold-600 font-bold text-navy-950" : "",
                 isToday && !isSelected ? "ring-1 ring-navy-400" : "",
               ]
@@ -157,7 +157,7 @@ export function BookingCalendar({
               {legendAvailable}
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="relative h-3 w-3 rounded-full border border-navy-300">
+              <span className="relative h-3 w-3 rounded-full border border-navy-200">
                 <span className="absolute inset-x-0 top-1/2 h-px bg-navy-300" />
               </span>
               {legendBooked}
