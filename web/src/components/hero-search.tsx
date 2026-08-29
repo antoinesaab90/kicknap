@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export interface HeroSearchTexts {
   whereLabel: string;
@@ -119,8 +119,8 @@ export function HeroSearch({
   const [recent, setRecent] = useState<SavedDestination[]>([]);
 
   const todayStr = useMemo(() => localDateStr(), []);
-  const [todayY, todayM] = todayStr.split("-").map(Number);
-  const [month, setMonth] = useState({ y: todayY, m: todayM - 1 });
+  const [todayY, todayMonthIndex] = todayStr.split("-").map(Number);
+  const [monthStart, setMonthStart] = useState({ y: todayY, m: todayMonthIndex - 1 });
   const [date, setDate] = useState("");
   const [flexHours, setFlexHours] = useState(0);
   const [duration, setDuration] = useState(2);
@@ -128,6 +128,11 @@ export function HeroSearch({
   const [adults, setAdults] = useState(1);
   const [children, setChildren] = useState(0);
   const [pets, setPets] = useState(0);
+
+  const whereInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (open === "where") whereInputRef.current?.focus();
+  }, [open]);
 
   const close = () => setOpen(null);
 
@@ -195,9 +200,18 @@ export function HeroSearch({
       placeholder ? "text-navy-400" : "text-navy-900"
     }`;
 
-  const firstWeekday = new Date(Date.UTC(month.y, month.m, 1)).getUTCDay();
-  const daysInMonth = new Date(Date.UTC(month.y, month.m + 1, 0)).getUTCDate();
-  const leadingBlanks = (firstWeekday + 6) % 7;
+  // Airbnb-style entrance: fade + rise + gentle scale, 200ms ease-out.
+  const cardAnim = (isOpen: boolean) =>
+    `transition-all duration-200 ease-out ${
+      isOpen
+        ? "pointer-events-auto opacity-100 translate-y-0 scale-100"
+        : "pointer-events-none opacity-0 translate-y-1.5 scale-[0.98]"
+    }`;
+
+  const nextMonthOf = (m: { y: number; m: number }) =>
+    m.m === 11 ? { y: m.y + 1, m: 0 } : { y: m.y, m: m.m + 1 };
+  const monthB = nextMonthOf(monthStart);
+  const atCurrentMonth = monthStart.y === todayY && monthStart.m === todayMonthIndex;
 
   return (
     <form
@@ -254,232 +268,279 @@ export function HeroSearch({
         <div className="fixed inset-0 z-30" onClick={close} aria-hidden="true" />
       )}
 
-      {/* Where dropdown */}
-      {open === "where" && (
-        <div className="absolute left-0 right-0 top-full z-40 mt-3 rounded-3xl border border-navy-100 bg-white p-4 shadow-xl" role="dialog">
-          <input
-            autoFocus
-            type="text"
-            value={whereQuery}
-            onChange={(e) => setWhereQuery(e.target.value)}
-            placeholder={texts.typeHere}
-            className="w-full rounded-2xl border border-navy-200 bg-navy-50 px-4 py-3 text-sm text-navy-900 outline-none focus:border-navy-500"
-          />
+      {/* Where dropdown — compact, aligned under the Where field */}
+      <div
+        className={`absolute left-0 top-full z-40 mt-3 w-80 max-w-[calc(100vw-2rem)] rounded-3xl border border-navy-100 bg-white p-4 shadow-xl ${cardAnim(open === "where")}`}
+        role="dialog"
+        inert={open !== "where"}
+      >
+        <input
+          ref={whereInputRef}
+          type="text"
+          value={whereQuery}
+          onChange={(e) => setWhereQuery(e.target.value)}
+          placeholder={texts.typeHere}
+          className="w-full rounded-2xl border border-navy-200 bg-navy-50 px-4 py-3 text-sm text-navy-900 outline-none focus:border-navy-500"
+        />
 
-          <div className="mt-3 max-h-80 space-y-4 overflow-y-auto pr-1">
-            {!whereQuery.trim() && recent.length > 0 && (
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-navy-500">
-                  {texts.recents}
-                </p>
-                <ul className="mt-1.5">
-                  {recent.map((r) => (
-                    <li key={r.label}>
-                      <button
-                        type="button"
-                        onClick={() => pickDestination(r)}
-                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-navy-800 transition-colors hover:bg-navy-50"
-                      >
-                        <ClockIcon className="h-4 w-4 text-navy-400" />
-                        {r.label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
+        <div className="mt-3 max-h-72 space-y-4 overflow-y-auto pr-1">
+          {!whereQuery.trim() && recent.length > 0 && (
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wide text-navy-500">
-                {texts.popular}
+                {texts.recents}
               </p>
-              {destinations.length === 0 ? (
-                <p className="mt-2 px-3 text-sm text-navy-500">{texts.noMatch}</p>
-              ) : (
-                <ul className="mt-1.5">
-                  {destinations.map((d) => (
-                    <li key={d.label}>
-                      <button
-                        type="button"
-                        onClick={() => pickDestination(d)}
-                        className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-navy-800 transition-colors hover:bg-navy-50"
-                      >
-                        <PinIcon className="h-4 w-4 text-navy-400" />
-                        {d.label}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <ul className="mt-1.5">
+                {recent.map((r) => (
+                  <li key={r.label}>
+                    <button
+                      type="button"
+                      onClick={() => pickDestination(r)}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-navy-800 transition-colors hover:bg-navy-50"
+                    >
+                      <ClockIcon className="h-4 w-4 text-navy-400" />
+                      {r.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
+          )}
+
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-navy-500">
+              {texts.popular}
+            </p>
+            {destinations.length === 0 ? (
+              <p className="mt-2 px-3 text-sm text-navy-500">{texts.noMatch}</p>
+            ) : (
+              <ul className="mt-1.5">
+                {destinations.map((d) => (
+                  <li key={d.label}>
+                    <button
+                      type="button"
+                      onClick={() => pickDestination(d)}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-sm text-navy-800 transition-colors hover:bg-navy-50"
+                    >
+                      <PinIcon className="h-4 w-4 text-navy-400" />
+                      {d.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
-      )}
+      </div>
 
-      {/* When dropdown */}
-      {open === "when" && (
-        <div
-          className="absolute left-1/2 top-full z-40 mt-3 w-[22rem] max-w-full -translate-x-1/2 rounded-3xl border border-navy-100 bg-white p-4 shadow-xl"
-          role="dialog"
-        >
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              aria-label="Previous month"
-              disabled={month.y === todayY && month.m === todayM}
-              onClick={() =>
-                setMonth((m) => (m.m === 0 ? { y: m.y - 1, m: 11 } : { y: m.y, m: m.m - 1 }))
-              }
-              className="flex h-8 w-8 items-center justify-center rounded-full text-navy-600 transition-colors hover:bg-navy-100 disabled:opacity-30"
-            >
-              <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <path d="M12 4l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <p className="text-sm font-semibold text-navy-900">{monthLabel(month.y, month.m, lang)}</p>
-            <button
-              type="button"
-              aria-label="Next month"
-              onClick={() =>
-                setMonth((m) => (m.m === 11 ? { y: m.y + 1, m: 0 } : { y: m.y, m: m.m + 1 }))
-              }
-              className="flex h-8 w-8 items-center justify-center rounded-full text-navy-600 transition-colors hover:bg-navy-100"
-            >
-              <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                <path d="M8 4l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
+      {/* When dropdown — wide under the bar, current + next month by default */}
+      <div
+        className={`absolute left-1/2 top-full z-40 mt-3 w-[38rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-3xl border border-navy-100 bg-white p-4 shadow-xl ${cardAnim(open === "when")}`}
+        role="dialog"
+        inert={open !== "when"}
+      >
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            aria-label="Previous months"
+            disabled={atCurrentMonth}
+            onClick={() =>
+              setMonthStart((m) => (m.m === 0 ? { y: m.y - 1, m: 11 } : { y: m.y, m: m.m - 1 }))
+            }
+            className="flex h-8 w-8 items-center justify-center rounded-full text-navy-600 transition-colors hover:bg-navy-100 disabled:opacity-30"
+          >
+            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M12 4l-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <p className="flex items-baseline gap-2 text-sm font-semibold text-navy-900">
+            <span>{monthLabel(monthStart.y, monthStart.m, lang)}</span>
+            <span className="font-normal text-navy-400">–</span>
+            <span>{monthLabel(monthB.y, monthB.m, lang)}</span>
+          </p>
+          <button
+            type="button"
+            aria-label="Next months"
+            onClick={() => setMonthStart(nextMonthOf)}
+            className="flex h-8 w-8 items-center justify-center rounded-full text-navy-600 transition-colors hover:bg-navy-100"
+          >
+            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M8 4l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+        </div>
 
-          <div className="mt-2 grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wide text-navy-500">
-            {weekdayNames(lang).map((name, i) => (
-              <span key={i} className="py-1">{name}</span>
-            ))}
-          </div>
-          <div className="grid grid-cols-7 gap-1">
-            {Array.from({ length: leadingBlanks }, (_, i) => (
-              <span key={`b${i}`} />
-            ))}
-            {Array.from({ length: daysInMonth }, (_, i) => {
-              const day = i + 1;
-              const ds = dateStr(month.y, month.m, day);
-              const past = ds < todayStr;
-              const selected = ds === date;
-              const isToday = ds === todayStr;
-              return (
-                <span key={ds} className="flex justify-center">
-                  <button
-                    type="button"
-                    disabled={past}
-                    onClick={() => setDate(ds)}
-                    className={`flex h-10 w-10 items-center justify-center rounded-full text-sm transition-colors ${
-                      past
-                        ? "cursor-not-allowed text-navy-100"
-                        : selected
-                          ? "bg-navy-800 font-semibold text-white"
-                          : "font-medium text-navy-900 hover:bg-gold-100"
-                    } ${isToday && !selected ? "ring-1 ring-navy-400" : ""}`}
-                  >
-                    {day}
-                  </button>
-                </span>
-              );
-            })}
-          </div>
-
-          <div className="mt-4 border-t border-navy-100 pt-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-navy-500">
-              {texts.flexibility}
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {flexOptions.map((opt) => (
-                <button
-                  key={opt.v}
-                  type="button"
-                  onClick={() => setFlexHours(opt.v as 0 | 1 | 2 | 4)}
-                  className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    flexHours === opt.v
-                      ? "border-navy-800 bg-navy-800 text-white"
-                      : "border-navy-200 text-navy-700 hover:border-navy-400"
-                  }`}
-                >
-                  {opt.label}
-                </button>
+        <div className="mt-2 grid grid-cols-2 gap-6">
+          <div>
+            <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wide text-navy-500">
+              {weekdayNames(lang).map((name, i) => (
+                <span key={i} className="py-1">{name}</span>
               ))}
             </div>
+            <MonthDays
+              year={monthStart.y}
+              month={monthStart.m}
+              todayStr={todayStr}
+              date={date}
+              onPick={setDate}
+            />
           </div>
-
-          <div className="mt-3 flex items-center justify-between border-t border-navy-100 pt-3">
-            <span className="text-sm text-navy-700">{texts.duration}</span>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                aria-label="−"
-                disabled={duration <= 1}
-                onClick={() => setDuration((v) => Math.max(1, v - 1))}
-                className="flex h-7 w-7 items-center justify-center rounded-full border border-navy-200 text-navy-800 transition-colors hover:border-navy-400 disabled:opacity-40"
-              >
-                −
-              </button>
-              <span className="w-13 text-center text-sm font-semibold text-navy-900">
-                {duration}h
-              </span>
-              <button
-                type="button"
-                aria-label="+"
-                disabled={duration >= 12}
-                onClick={() => setDuration((v) => Math.min(12, v + 1))}
-                className="flex h-7 w-7 items-center justify-center rounded-full border border-navy-200 text-navy-800 transition-colors hover:border-navy-400 disabled:opacity-40"
-              >
-                +
-              </button>
+          <div>
+            <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold uppercase tracking-wide text-navy-500">
+              {weekdayNames(lang).map((name, i) => (
+                <span key={i} className="py-1">{name}</span>
+              ))}
             </div>
+            <MonthDays
+              year={monthB.y}
+              month={monthB.m}
+              todayStr={todayStr}
+              date={date}
+              onPick={setDate}
+            />
           </div>
-
-          <button
-            type="button"
-            onClick={close}
-            className="mt-4 w-full rounded-full bg-navy-800 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700"
-          >
-            {texts.done}
-          </button>
         </div>
-      )}
 
-      {/* Who dropdown */}
-      {open === "who" && (
-        <div
-          className="absolute right-0 top-full z-40 mt-3 w-full max-w-xs rounded-3xl border border-navy-100 bg-white p-4 shadow-xl"
-          role="dialog"
+        <div className="mt-4 border-t border-navy-100 pt-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-navy-500">
+            {texts.flexibility}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {flexOptions.map((opt) => (
+              <button
+                key={opt.v}
+                type="button"
+                onClick={() => setFlexHours(opt.v as 0 | 1 | 2 | 4)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  flexHours === opt.v
+                    ? "border-navy-800 bg-navy-800 text-white"
+                    : "border-navy-200 text-navy-700 hover:border-navy-400"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-3 flex items-center justify-between border-t border-navy-100 pt-3">
+          <span className="text-sm text-navy-700">{texts.duration}</span>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              aria-label="−"
+              disabled={duration <= 1}
+              onClick={() => setDuration((v) => Math.max(1, v - 1))}
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-navy-200 text-navy-800 transition-colors hover:border-navy-400 disabled:opacity-40"
+            >
+              −
+            </button>
+            <span className="w-13 text-center text-sm font-semibold text-navy-900">
+              {duration}h
+            </span>
+            <button
+              type="button"
+              aria-label="+"
+              disabled={duration >= 12}
+              onClick={() => setDuration((v) => Math.min(12, v + 1))}
+              className="flex h-7 w-7 items-center justify-center rounded-full border border-navy-200 text-navy-800 transition-colors hover:border-navy-400 disabled:opacity-40"
+            >
+              +
+            </button>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={close}
+          className="mt-4 w-full rounded-full bg-navy-800 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700"
         >
-          <GuestRow
-            label={texts.adults}
-            value={adults}
-            min={1}
-            max={8}
-            onChange={setAdults}
-          />
-          <div className="mt-px" />
-          <GuestRow
-            label={texts.children}
-            value={children}
-            min={0}
-            max={8}
-            onChange={setChildren}
-          />
-          <div className="mt-px" />
-          <GuestRow label={texts.pets} value={pets} min={0} max={2} onChange={setPets} />
+          {texts.done}
+        </button>
+      </div>
 
-          <button
-            type="button"
-            onClick={close}
-            className="mt-4 w-full rounded-full bg-navy-800 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700"
-          >
-            {texts.done}
-          </button>
-        </div>
-      )}
+      {/* Who dropdown — compact, right-aligned under the Who field */}
+      <div
+        className={`absolute right-0 top-full z-40 mt-3 w-80 max-w-[calc(100vw-2rem)] rounded-3xl border border-navy-100 bg-white p-4 shadow-xl ${cardAnim(open === "who")}`}
+        role="dialog"
+        inert={open !== "who"}
+      >
+        <GuestRow
+          label={texts.adults}
+          value={adults}
+          min={1}
+          max={8}
+          onChange={setAdults}
+        />
+        <div className="mt-px" />
+        <GuestRow
+          label={texts.children}
+          value={children}
+          min={0}
+          max={8}
+          onChange={setChildren}
+        />
+        <div className="mt-px" />
+        <GuestRow label={texts.pets} value={pets} min={0} max={2} onChange={setPets} />
+
+        <button
+          type="button"
+          onClick={close}
+          className="mt-4 w-full rounded-full bg-navy-800 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700"
+        >
+          {texts.done}
+        </button>
+      </div>
     </form>
+  );
+}
+
+function MonthDays({
+  year,
+  month,
+  todayStr,
+  date,
+  onPick,
+}: {
+  year: number;
+  month: number;
+  todayStr: string;
+  date: string;
+  onPick: (next: string) => void;
+}) {
+  const firstWeekday = new Date(Date.UTC(year, month, 1)).getUTCDay();
+  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  const leading = (firstWeekday + 6) % 7;
+  return (
+    <div className="grid grid-cols-7 gap-1">
+      {Array.from({ length: leading }, (_, i) => (
+        <span key={`b${i}`} />
+      ))}
+      {Array.from({ length: daysInMonth }, (_, i) => {
+        const day = i + 1;
+        const ds = dateStr(year, month, day);
+        const past = ds < todayStr;
+        const selected = ds === date;
+        const isToday = ds === todayStr;
+        return (
+          <span key={ds} className="flex justify-center">
+            <button
+              type="button"
+              disabled={past}
+              onClick={() => onPick(ds)}
+              className={`flex h-9 w-9 items-center justify-center rounded-full text-sm transition-colors ${
+                past
+                  ? "cursor-not-allowed text-navy-100"
+                  : selected
+                    ? "bg-navy-800 font-semibold text-white"
+                    : "font-medium text-navy-900 hover:bg-gold-100"
+              } ${isToday && !selected ? "ring-1 ring-navy-400" : ""}`}
+            >
+              {day}
+            </button>
+          </span>
+        );
+      })}
+    </div>
   );
 }
 
