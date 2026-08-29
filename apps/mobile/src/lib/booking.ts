@@ -153,22 +153,29 @@ export function windowsFromStart(
   return ends;
 }
 
-export const TAX_RATE = 0.21;
-export const GUEST_FEE_RATE = 0.1;
+export const TAKE_RATE = 0.16;
 
 export interface PriceBreakdown {
   minutes: number;
   baseCents: number;
-  taxCents: number;
   feeCents: number;
   totalCents: number;
 }
 
+// Single embedded 16% fee: base is what the host receives, total is the
+// all-in guest price and matches what the payments service charges.
 export function computeBreakdown(minutes: number, hourlyCents: number): PriceBreakdown {
   const baseCents = Math.round((minutes / 60) * hourlyCents);
-  const taxCents = Math.round(baseCents * TAX_RATE);
-  const feeCents = Math.round(baseCents * GUEST_FEE_RATE);
-  return { minutes, baseCents, taxCents, feeCents, totalCents: baseCents + feeCents };
+  const totalCents = Math.round(baseCents / (1 - TAKE_RATE));
+  return { minutes, baseCents, feeCents: totalCents - baseCents, totalCents };
+}
+
+export function allInCents(baseCents: number): number {
+  return Math.round(baseCents / (1 - TAKE_RATE));
+}
+
+export function allInHourlyCents(hourlyCents: number): number {
+  return Math.round(hourlyCents / (1 - TAKE_RATE));
 }
 
 export function formatDuration(minutes: number): string {

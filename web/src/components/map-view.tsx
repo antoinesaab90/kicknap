@@ -5,6 +5,7 @@ import Supercluster from "supercluster";
 import type { Map as MLMap, Marker } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { formatEuro } from "@/components/space-card";
+import { allInHourlyCents } from "@/lib/price";
 import type { SpaceDto } from "@/lib/types/space";
 
 const STYLE_URL = "https://tiles.openfreemap.org/styles/liberty";
@@ -40,7 +41,7 @@ export function MapView({ spaces, selectedId, onSelect }: MapViewProps) {
       },
       properties: {
         id: space.id,
-        price: space.hourlyPriceCents,
+        price: allInHourlyCents(space.hourlyPriceCents),
         selected: space.id === selectedId,
       },
     }));

@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { guestTotalCents } from "./price.js";
 
 export interface MailMessage {
   to: string;
@@ -119,7 +120,7 @@ export function renderBookingConfirmation(data: BookingMailData): { subject: str
     infoRow("Space", `${escapeHtml(data.spaceName)} · ${escapeHtml(data.neighborhood)}, ${escapeHtml(data.city)}`),
     infoRow("Check-in", formatLocalTime(data.fromIso)),
     infoRow("Check-out", formatLocalTime(data.toIso)),
-    infoRow("Total", formatEuro(data.priceCents)),
+    infoRow("Total", formatEuro(guestTotalCents(data.priceCents))),
     `</table>`,
     `<p style="margin-top:24px;">Show this confirmation at check-in. Enjoy the quiet.</p>`
   );

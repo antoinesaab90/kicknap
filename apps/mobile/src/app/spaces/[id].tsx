@@ -22,6 +22,7 @@ import {
   type OpeningHourRule,
 } from '@/lib/api';
 import {
+  allInHourlyCents,
   availableStartMinutes,
   computeBreakdown,
   dayState,
@@ -296,7 +297,7 @@ export default function SpaceDetailScreen() {
                 <Text style={styles.price}>{formatEuro(fixedSessionTotal)}</Text>
               ) : (
                 <Text style={styles.price}>
-                  {formatEuro(space.hourlyPriceCents)}
+                  {formatEuro(allInHourlyCents(space.hourlyPriceCents))}
                   <Text style={styles.priceSuffix}>/hr</Text>
                 </Text>
               )}
@@ -420,11 +421,7 @@ export default function SpaceDetailScreen() {
                     <Text style={styles.breakdownValue}>{formatEuro(totalBreakdown.baseCents)}</Text>
                   </View>
                   <View style={styles.breakdownLine}>
-                    <Text style={styles.breakdownLabel}>VAT 21% (included)</Text>
-                    <Text style={styles.breakdownValue}>{formatEuro(totalBreakdown.taxCents)}</Text>
-                  </View>
-                  <View style={styles.breakdownLine}>
-                    <Text style={styles.breakdownLabel}>Booking fee 10%</Text>
+                    <Text style={styles.breakdownLabel}>Service fee & taxes included</Text>
                     <Text style={styles.breakdownValue}>{formatEuro(totalBreakdown.feeCents)}</Text>
                   </View>
                   <View style={[styles.breakdownLine, styles.breakdownTotalLine]}>

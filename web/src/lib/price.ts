@@ -1,22 +1,27 @@
-export const TAX_RATE = 0.21;
-export const GUEST_FEE_RATE = 0.1;
+export const TAKE_RATE = 0.16;
 
 export interface PriceBreakdown {
   minutes: number;
   baseCents: number;
-  taxCents: number;
   feeCents: number;
   totalCents: number;
 }
 
-// Guest bill for a stay. `totalCents` is exactly what Stripe charges the guest
-// (base + 10% booking fee, matching the payments service). VAT is itemized but
-// included in the base rental price.
+// The guest pays one all-in price: the base rate (which the host receives)
+// plus a single embedded 16% marketplace fee. `totalCents` matches exactly
+// what the payments service charges via Stripe.
 export function computeBreakdown(minutes: number, hourlyCents: number): PriceBreakdown {
   const baseCents = Math.round((minutes / 60) * hourlyCents);
-  const taxCents = Math.round(baseCents * TAX_RATE);
-  const feeCents = Math.round(baseCents * GUEST_FEE_RATE);
-  return { minutes, baseCents, taxCents, feeCents, totalCents: baseCents + feeCents };
+  const totalCents = Math.round(baseCents / (1 - TAKE_RATE));
+  return { minutes, baseCents, feeCents: totalCents - baseCents, totalCents };
+}
+
+export function allInCents(baseCents: number): number {
+  return Math.round(baseCents / (1 - TAKE_RATE));
+}
+
+export function allInHourlyCents(hourlyCents: number): number {
+  return Math.round(hourlyCents / (1 - TAKE_RATE));
 }
 
 export function formatDuration(minutes: number): string {

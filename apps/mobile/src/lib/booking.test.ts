@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  allInCents,
+  allInHourlyCents,
   availableStartMinutes,
   computeBreakdown,
   dayState,
@@ -190,12 +192,12 @@ describe('dayOpenIntervals', () => {
 });
 
 describe('computeBreakdown', () => {
-  it('splits a 6h30m stay at €15.75/hr into rent, VAT-included and fee', () => {
+  it('splits a 6h30m stay at €15.75/hr into base, 16% fee and all-in total', () => {
     const b = computeBreakdown(390, 1575);
     expect(b.baseCents).toBe(10238);
-    expect(b.taxCents).toBe(2150);
-    expect(b.feeCents).toBe(1024);
-    expect(b.totalCents).toBe(11262);
+    expect(b.feeCents).toBe(1950);
+    expect(b.totalCents).toBe(12188);
+    expect(b.feeCents).toBe(b.totalCents - b.baseCents);
   });
 
   it('matches the payments guest total for the fixed 3h session', () => {
@@ -203,16 +205,23 @@ describe('computeBreakdown', () => {
     expect(b).toEqual({
       minutes: 180,
       baseCents: 5400,
-      taxCents: 1134,
-      feeCents: 540,
-      totalCents: 5940,
+      feeCents: 1029,
+      totalCents: 6429,
     });
   });
 
   it('rounds a fractional hour stay', () => {
     const b = computeBreakdown(150, 1000);
     expect(b.baseCents).toBe(2500);
-    expect(b.feeCents).toBe(250);
+    expect(b.feeCents).toBe(476);
+    expect(b.totalCents).toBe(2976);
+  });
+});
+
+describe('all-in helpers', () => {
+  it('prices the per-hour display as the guest pays it', () => {
+    expect(allInHourlyCents(1050)).toBe(1250);
+    expect(allInCents(5400)).toBe(6429);
   });
 });
 

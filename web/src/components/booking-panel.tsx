@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { amsZonedIso, formatEuro } from "@/lib/format";
-import { computeBreakdown, formatDuration } from "@/lib/price";
+import { allInCents, allInHourlyCents, computeBreakdown, formatDuration } from "@/lib/price";
 import {
   availableStartMinutes,
   dayState,
@@ -42,7 +42,6 @@ export interface BookingTexts {
   paymentFailed: string;
   priceBreakdown: string;
   breakdownRental: string;
-  breakdownVat: string;
   breakdownFee: string;
   breakdownTotal: string;
   fixedSession: string;
@@ -328,7 +327,7 @@ export function BookingPanel({
         <div className="mt-4 rounded-2xl bg-navy-50 p-4 text-sm text-navy-700">
           <p className="font-medium text-navy-900">{fromLocal}</p>
           <p className="mt-1">
-            {formatEuro(booking.priceCents)}
+            {formatEuro(allInCents(booking.priceCents))}
             <span className="text-navy-600"> · {formatDuration(booking.durationMinutes)}</span>
           </p>
         </div>
@@ -366,7 +365,7 @@ export function BookingPanel({
   return (
     <Card>
       <p className="text-sm font-semibold text-navy-600">
-        {isFixed ? formatEuro(estimate?.totalCents ?? 0) : formatEuro(hourlyRateCents)}
+        {isFixed ? formatEuro(estimate?.totalCents ?? 0) : formatEuro(allInHourlyCents(hourlyRateCents))}
         <span className="font-normal">{isFixed ? ` ${sessionLabel}` : texts.perHour}</span>
       </p>
 
@@ -485,12 +484,8 @@ export function BookingPanel({
                       <span className="font-semibold">{formatEuro(estimate.baseCents)}</span>
                     </div>
                     <div className="flex justify-between gap-3">
-                      <span>{texts.breakdownVat}</span>
-                      <span>{formatEuro(estimate.taxCents)}</span>
-                    </div>
-                    <div className="flex justify-between gap-3">
                       <span>{texts.breakdownFee}</span>
-                      <span>{formatEuro(estimate.feeCents)}</span>
+                      <span className="font-semibold">{formatEuro(estimate.feeCents)}</span>
                     </div>
                     <div className="mt-2 flex justify-between gap-3 border-t border-navy-100 pt-2 font-semibold text-navy-900">
                       <span>{texts.breakdownTotal}</span>

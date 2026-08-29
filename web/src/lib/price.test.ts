@@ -1,30 +1,40 @@
 import { describe, expect, it } from "vitest";
-import { computeBreakdown, formatDuration } from "./price";
+import { allInCents, allInHourlyCents, computeBreakdown, formatDuration } from "./price";
 
 describe("computeBreakdown", () => {
-  it("splits a 6h30m stay at €15.75/hr into rent, tax-included and fee", () => {
+  it("splits a 6h30m stay at €15.75/hr into base, 16% fee and all-in total", () => {
     const b = computeBreakdown(390, 1575);
     expect(b.baseCents).toBe(10238);
-    expect(b.taxCents).toBe(2150);
-    expect(b.feeCents).toBe(1024);
-    expect(b.totalCents).toBe(11262);
+    expect(b.feeCents).toBe(1950);
+    expect(b.totalCents).toBe(12188);
+    expect(b.feeCents).toBe(b.totalCents - b.baseCents);
   });
 
   it("matches the payments guest total for the fixed 3h session", () => {
     expect(computeBreakdown(180, 1800)).toEqual({
       minutes: 180,
       baseCents: 5400,
-      taxCents: 1134,
-      feeCents: 540,
-      totalCents: 5940,
+      feeCents: 1029,
+      totalCents: 6429,
     });
   });
 
-  it("includes the fee in the total, as Stripe charges it", () => {
+  it("fee is 16% of the total for a clean whole-euro session", () => {
     const b = computeBreakdown(240, 1050);
     expect(b.baseCents).toBe(4200);
-    expect(b.feeCents).toBe(420);
-    expect(b.totalCents).toBe(b.baseCents + b.feeCents);
+    expect(b.feeCents).toBe(800);
+    expect(b.totalCents).toBe(5000);
+  });
+});
+
+describe("all-in helpers", () => {
+  it("prices the per-hour display as the guest pays it", () => {
+    expect(allInHourlyCents(1575)).toBe(1875);
+    expect(allInHourlyCents(1050)).toBe(1250);
+  });
+
+  it("converts a booking base price to its all-in guest amount", () => {
+    expect(allInCents(5400)).toBe(6429);
   });
 });
 

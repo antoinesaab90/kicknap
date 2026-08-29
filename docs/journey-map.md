@@ -1,6 +1,6 @@
 # kicknap — Guest & Host Journey Map
 
-Two-sided flow for the live product (web + iOS/Android app), mapped to the services each step calls. Pricing model: guest pays `base + 10% fee`, host receives `base − 3%`; VAT 21% is itemized as "included" in the rental line.
+Two-sided flow for the live product (web + iOS/Android app), mapped to the services each step calls. Pricing model: single embedded 16% marketplace fee — the host sets the price they receive (`hourlyPriceCents`), the guest pays one all-in price of `base ÷ 0.84` (fees & taxes included in the displayed total).
 
 ## Guest journey
 

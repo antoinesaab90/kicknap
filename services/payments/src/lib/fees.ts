@@ -1,5 +1,4 @@
-export const GUEST_FEE_PERCENT = 0.10;
-export const HOST_FEE_PERCENT = 0.03;
+export const TAKE_RATE = 0.16;
 
 export interface FeeBreakdown {
   subtotalCents: number;
@@ -9,14 +8,14 @@ export interface FeeBreakdown {
   hostPayoutCents: number;
 }
 
+// guestTotalCents is exactly what Stripe charges the guest.
 export function computeFees(subtotalCents: number): FeeBreakdown {
-  const guestFeeCents = Math.round(subtotalCents * GUEST_FEE_PERCENT);
-  const hostFeeCents = Math.round(subtotalCents * HOST_FEE_PERCENT);
+  const guestTotalCents = Math.round(subtotalCents / (1 - TAKE_RATE));
   return {
     subtotalCents,
-    guestFeeCents,
-    hostFeeCents,
-    guestTotalCents: subtotalCents + guestFeeCents,
-    hostPayoutCents: subtotalCents - hostFeeCents,
+    guestFeeCents: guestTotalCents - subtotalCents,
+    hostFeeCents: 0,
+    guestTotalCents,
+    hostPayoutCents: subtotalCents,
   };
 }

@@ -4,6 +4,7 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 import { clearSession, getSession } from "@/lib/auth";
 import { identifyUser, fetchSpace, serviceBaseUrl } from "@/lib/api";
 import { formatEuro, formatDateTime } from "@/lib/format";
+import { allInCents } from "@/lib/price";
 import type { BookingsResponse } from "@/lib/types/booking";
 
 export default async function MyBookingsPage() {
@@ -126,7 +127,7 @@ export default async function MyBookingsPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-semibold text-navy-900">
-                    {formatEuro(booking.priceCents)}
+                    {formatEuro(allInCents(booking.priceCents))}
                   </p>
                   {paymentStatus === "paid" ? (
                     <span className="mt-2 inline-block rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">

@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { checkMany, listSpaces } from '@/lib/api';
 import { amsZonedIso, formatEuro } from '@/lib/format';
+import { allInHourlyCents } from '@/lib/booking';
 import { colors, radius, spacing } from '@/lib/theme';
 import type { Space } from '@/lib/types';
 import { Button, Pill } from '@/components/ui';
@@ -205,7 +206,7 @@ function SearchCard({ space }: { space: Space }) {
             {space.name}
           </Text>
           <Text style={styles.cardPrice}>
-            {formatEuro(space.hourlyPriceCents)}
+            {formatEuro(allInHourlyCents(space.hourlyPriceCents))}
             <Text style={styles.cardPriceSuffix}>/hr</Text>
           </Text>
         </View>

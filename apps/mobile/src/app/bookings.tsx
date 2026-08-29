@@ -4,6 +4,7 @@ import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { myBookings } from '@/lib/api';
 import { formatAmsterdam, formatEuro } from '@/lib/format';
+import { allInCents } from '@/lib/booking';
 import { colors, radius, spacing } from '@/lib/theme';
 import type { Booking } from '@/lib/types';
 import { Button, StatusChip } from '@/components/ui';
@@ -125,7 +126,7 @@ function BookingCard({ booking }: { booking: Booking }) {
       <Text style={styles.cardMeta}>
         Space {booking.spaceId} · {booking.durationMinutes} min
       </Text>
-      <Text style={styles.cardPrice}>{formatEuro(booking.priceCents)}</Text>
+      <Text style={styles.cardPrice}>{formatEuro(allInCents(booking.priceCents))}</Text>
     </View>
   );
 }

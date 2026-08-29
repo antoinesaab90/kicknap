@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatEuro } from "@/lib/format";
+import { allInHourlyCents } from "@/lib/price";
 import type { SpaceDto } from "@/lib/types/space";
 
 export { formatEuro };
@@ -45,7 +46,7 @@ export function SpaceCard({
           </span>
         )}
         <span className="absolute bottom-3 left-3 rounded-full bg-white px-3.5 py-1.5 text-sm font-semibold text-navy-900 shadow">
-          {formatEuro(space.hourlyPriceCents)}
+          {formatEuro(allInHourlyCents(space.hourlyPriceCents))}
           <span className="font-medium text-navy-600">{texts.perHour}</span>
         </span>
         {space.timesRated > 0 && (

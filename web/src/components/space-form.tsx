@@ -286,6 +286,7 @@ export function SpaceForm({ mode, lang, dict, spaceId, initial, initialRules }: 
             onChange={(e) => setEuros(e.target.value)}
             className={input}
           />
+          <p className="mt-1.5 text-xs text-navy-500">{t.hourlyPriceHint}</p>
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">

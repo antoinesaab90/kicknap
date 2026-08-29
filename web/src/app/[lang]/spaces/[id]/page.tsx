@@ -4,7 +4,7 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 import { fetchSpace } from "@/lib/api";
 import { getSession } from "@/lib/auth";
 import { formatEuro } from "@/lib/format";
-import { computeBreakdown } from "@/lib/price";
+import { allInHourlyCents, computeBreakdown } from "@/lib/price";
 import { BookingPanel } from "@/components/booking-panel";
 import type { BookingTexts } from "@/components/booking-panel";
 
@@ -62,7 +62,6 @@ export default async function SpacePage({
     paymentFailed: dict.space.paymentFailed,
     priceBreakdown: dict.space.priceBreakdown,
     breakdownRental: dict.space.breakdownRental,
-    breakdownVat: dict.space.breakdownVat,
     breakdownFee: dict.space.breakdownFee,
     breakdownTotal: dict.space.breakdownTotal,
     fixedSession: dict.space.fixedSession,
@@ -138,7 +137,7 @@ export default async function SpacePage({
               <p className="text-2xl font-semibold text-navy-900">
                 {isFixed
                   ? formatEuro(fixedSessionCents ?? 0)
-                  : formatEuro(space.hourlyPriceCents)}
+                  : formatEuro(allInHourlyCents(space.hourlyPriceCents))}
                 <span className="text-sm font-medium text-navy-600">
                   {isFixed ? ` ${dict.space.fixedSession.replace("{h}", String(space.minHours))}` : dict.space.perHour}
                 </span>
