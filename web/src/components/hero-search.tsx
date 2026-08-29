@@ -239,13 +239,13 @@ export function HeroSearch({
           </button>
         </div>
 
-        <div className="px-3 py-2 sm:px-2 sm:py-0">
+        <div className="flex items-center justify-end px-3 py-1 sm:px-2 sm:py-0">
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-navy-800 px-8 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-navy-700 sm:w-auto"
+            aria-label={texts.button}
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-navy-800 text-white transition-colors hover:bg-navy-700"
           >
-            <SearchIcon className="h-4 w-4" />
-            {texts.button}
+            <SearchIcon className="h-5 w-5" />
           </button>
         </div>
       </div>
