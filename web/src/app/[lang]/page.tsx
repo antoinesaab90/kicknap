@@ -30,6 +30,7 @@ export default async function HomePage() {
     demoNote: dict.search.demoNote,
     save: dict.cart.save,
     saved: dict.cart.saved,
+    capacity: dict.space,
   };
 
   const heroTexts: HeroSearchTexts = {

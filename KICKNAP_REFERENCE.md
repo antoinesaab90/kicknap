@@ -271,8 +271,8 @@ All files at: `C:\Users\antoi\Documents\Default Project\kicknap\`
 
 ### Database (single Neon `neondb`, eu-central-1)
 - One Postgres, per-service schemas (drizzle `pgSchema`): `identity.*` (users), `listings.*` (spaces, opening_hours), `availability.*`, `bookings.*` (bookings), `payments.*` (payments table)
-- Reaching prod DB from a local script: **pass `DATABASE_URL` explicitly** (e.g. `env:DATABASE_URL = "postgresql://neondb_owner:***@ep-purple-frog-b15k5ftd.c-5.eu-central-1.aws.neon.tech/neondb?sslmode=require"`) — the services' own `.env` files point at a **localhost Postgres (dev only)** and silently hit the wrong DB.
-- Seed state: 12 demo spaces (ids 13–24), 84 opening-hour rows, bookings id 2 (space 21, 2026-08-28, €15.60) and id 6 (space 21, 2026-08-29, paid €17.16 → payments row id 1 `succeeded`), 2 demo users. Demo accounts: `guest+demo@kicknap.com` / `host+demo@kicknap.com`, password `demo12345` (public demo creds — shown on the login page).
+- Reaching prod DB from a local script: **pass `DATABASE_URL` explicitly** — the services' own `.env` files point at a **localhost Postgres (dev only)** and silently hit the wrong DB. The production Neon URL lives **only** as a *Secret* in Vercel (`vercel env pull` replaces it with `[SENSITIVE]`), so it is obtained from the user's Neon dashboard (project → Connect → `neondb` → copy string for `neondb_owner`). Once provided, run `npx tsx scripts/vary-capacity.ts` inside `services/listings` with `$env:DATABASE_URL` set to that URL (never write the string to a file or commit it).
+- Seed state: 13 published spaces (ids 13–25). Capacities are deliberately **varied per listing** (to exercise the guest/Who filters): adults 1–6, children 0–4, pets on/off (see `services/listings/scripts/vary-capacity.ts`; ids 14, 17, 22, 25 are pets=false; 15 & 23 solo adult=1; 16 & 24 large adult=6/children=4). Space 25 "E2E Host Lounge" is **owned by the demo host** (`host+demo@kicknap.com`, listings users id 2) — its original owner had no identity account, making it unmanageable until reassigned in the DB. 84 opening-hour rows, 2 demo users. Demo accounts: `guest+demo@kicknap.com` / `host+demo@kicknap.com`, password `demo12345` (public demo creds — shown on the login page).
 
 ### Key flows (verified live)
 1. Register / Login → `kn_session` cookie → `/api/auth/me`
@@ -317,6 +317,8 @@ All files at: `C:\Users\antoi\Documents\Default Project\kicknap\`
 4. ✅ Host earnings ledger (live) — by-space + by-bookings + web BFF; host cash-out math next (payouts.webhook for host_accounts updates, v2 accounts)
 5. Native iOS/Android app — **in progress**: scaffold + core screens done, need on-device testing
 6. Vitest unit tests for price/date-time logic (mobile `format.ts` + services)
+7. ✅ Varied per-listing capacity (adults/children/pets) in prod + local so the Who box filters differ per space; capacity label plural-aware ("Fits 1 adult") and shown on cards + detail
+8. ✅ Space 25 ownership fixed (reassigned to demo host) — host edit/publish flow returns 200 for it
 
 ---
 *Last updated: August 2026*

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { MapView } from "@/components/map-view";
 import { SpaceCard } from "@/components/space-card";
+import type { CapacityWords } from "@/lib/capacity";
 import type { SpaceDto } from "@/lib/types/space";
 
 export function SearchView({
@@ -19,6 +20,7 @@ export function SearchView({
     list: string;
     save: string;
     saved: string;
+    capacity: CapacityWords;
   };
   lang: string;
 }) {

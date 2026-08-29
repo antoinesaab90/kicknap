@@ -149,6 +149,7 @@ export default async function SearchPage({
     list: dict.search.list,
     save: dict.cart.save,
     saved: dict.cart.saved,
+    capacity: dict.space,
   };
 
   const liveTexts = {

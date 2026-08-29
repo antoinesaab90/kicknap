@@ -4,6 +4,7 @@ import Link from "next/link";
 import { formatEuro } from "@/lib/format";
 import { allInHourlyCents } from "@/lib/price";
 import { CartToggle } from "@/components/cart-toggle";
+import { capacityLine, type CapacityWords } from "@/lib/capacity";
 import type { SpaceDto } from "@/lib/types/space";
 
 export { formatEuro };
@@ -17,7 +18,14 @@ export function SpaceCard({
 }: {
   space: SpaceDto;
   selected: boolean;
-  texts: { perHour: string; minHours: string; demoNote: string; save: string; saved: string };
+  texts: {
+    perHour: string;
+    minHours: string;
+    demoNote: string;
+    save: string;
+    saved: string;
+    capacity: CapacityWords;
+  };
   href: string;
   onHover?: () => void;
 }) {
@@ -70,6 +78,9 @@ export function SpaceCard({
               {space.minHours}h {texts.minHours}
             </span>
           </div>
+          <p className="mt-1 text-xs text-navy-500">
+            {capacityLine(space, texts.capacity)}
+          </p>
         </div>
       </Link>
 

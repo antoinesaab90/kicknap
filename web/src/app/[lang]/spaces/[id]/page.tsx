@@ -4,6 +4,7 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 import { fetchSpace, serviceBaseUrl } from "@/lib/api";
 import { getSession } from "@/lib/auth";
 import { formatEuro } from "@/lib/format";
+import { capacityLine } from "@/lib/capacity";
 import { allInHourlyCents, computeBreakdown } from "@/lib/price";
 import { BookingPanel } from "@/components/booking-panel";
 import { ReviewForm } from "@/components/review-form";
@@ -155,11 +156,7 @@ export default async function SpacePage({
                 {space.neighborhood} · {space.city}
               </p>
               <p className="mt-1 text-sm text-navy-600">
-                {dict.space.capacity
-                  .replace("{adults}", String(space.maxAdults))
-                  .replace("{children}", String(space.maxChildren))}
-                <span className="text-navy-400"> · </span>
-                {space.petsAllowed ? dict.space.petsAllowed : dict.space.petsNot}
+                {capacityLine(space, dict.space)}
               </p>
               {space.timesRated > 0 && (
                 <p className="mt-1 text-sm text-navy-700">

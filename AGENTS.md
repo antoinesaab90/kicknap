@@ -17,3 +17,5 @@
 - Mobile tests only work when vitest is resolved from `apps/mobile`'s own `node_modules` (run via the local `test` script, never bare `vitest run` from root).
 - `apps/mobile/.env` is gitignored (live URLs only, no secrets) — recreate from `.env.example` if missing.
 - Booking emails are silent until `EMAIL_SMTP_*` + `EMAIL_FROM` are set. Stripe stays in test mode until live keys are configured.
+- **Prod data scripts:** the services' `.env` files point at a localhost dev DB — any script that must touch production data needs `DATABASE_URL` set explicitly to the Neon URL. That URL is a Vercel *Secret* (un-pullable); get it from the Neon dashboard and pass it inline via env (never write it into a repo file). Template: `services/listings/scripts/vary-capacity.ts` (idempotent: ALTER-IF-NOT-EXISTS + per-space UPDATE, cycles capacity profiles) — safe to run against either DB.
+- Listing capacities are intentionally varied (ids 13–25): 1–6 adults, 0–4 children, pets on/off. Re-run `vary-capacity.ts` after re-seeding or the Who/guest filters lose their differentiation.
