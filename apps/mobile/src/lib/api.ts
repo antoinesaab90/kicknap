@@ -136,3 +136,27 @@ export async function myBookings(token: string, guestEmail: string): Promise<Boo
   );
   return data.bookings ?? [];
 }
+
+export interface OpeningHourRule {
+  dayOfWeek: number;
+  startMinute: number;
+  endMinute: number;
+}
+
+export async function fetchWeeklyHours(spaceId: number): Promise<OpeningHourRule[]> {
+  const data = await http<{ rules: OpeningHourRule[] }>(
+    `${AVAILABILITY_URL}/api/v1/spaces/${spaceId}/hours`
+  );
+  return data.rules ?? [];
+}
+
+export async function fetchBlocked(
+  spaceId: number,
+  fromIso: string,
+  toIso: string
+): Promise<{ fromIso: string; toIso: string }[]> {
+  const data = await http<{ bookings: { fromTs: string; toTs: string }[] }>(
+    `${BOOKINGS_URL}/api/v1/bookings${qs({ spaceId: String(spaceId), from: fromIso, to: toIso })}`
+  );
+  return (data.bookings ?? []).map((b) => ({ fromIso: b.fromTs, toIso: b.toTs }));
+}

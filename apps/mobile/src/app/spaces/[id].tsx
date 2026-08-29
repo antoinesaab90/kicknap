@@ -1,25 +1,40 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { createBooking, createCheckout, fetchSpace, paymentStatus } from '@/lib/api';
-import { amsOffsetMinutes, amsZonedIso, formatEuro } from '@/lib/format';
+import {
+  createBooking,
+  createCheckout,
+  fetchBlocked,
+  fetchSpace,
+  fetchWeeklyHours,
+  paymentStatus,
+  type OpeningHourRule,
+} from '@/lib/api';
+import {
+  availableStartMinutes,
+  dayState,
+  freeIntervals,
+  minutesToHm,
+  windowsFromStart,
+  type BookedWindow,
+} from '@/lib/booking';
+import { amsOffsetMinutes, amsZonedIso, formatAmsterdam, formatEuro } from '@/lib/format';
 import { colors, radius, spacing } from '@/lib/theme';
 import type { Space } from '@/lib/types';
-import { Button } from '@/components/ui';
+import { Button, Pill } from '@/components/ui';
+import { CalendarGrid, CalendarLegend, CalendarPanel } from '@/components/availability-calendar';
 import { useAuth } from '@/lib/auth';
-
-const BASE_HOURS = [1, 2, 3, 4, 6, 8];
 
 export default function SpaceDetailScreen() {
   const params = useLocalSearchParams<{ id: string }>();
@@ -28,46 +43,18 @@ export default function SpaceDetailScreen() {
 
   const [space, setSpace] = useState<Space | null>(null);
   const [loading, setLoading] = useState(true);
-  const [date, setDate] = useState('');
-  const [time, setTime] = useState('');
-  const [hours, setHours] = useState(2);
+  const [rules, setRules] = useState<OpeningHourRule[]>([]);
+  const [rulesLoading, setRulesLoading] = useState(true);
+  const [booked, setBooked] = useState<BookedWindow[]>([]);
+  const [month, setMonth] = useState(() => {
+    const now = new Date();
+    return { y: now.getFullYear(), m: now.getMonth() };
+  });
+  const [selectedDate, setSelectedDate] = useState('');
+  const [startMin, setStartMin] = useState<number | null>(null);
+  const [endMin, setEndMin] = useState<number | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    let active = true;
-    (async () => {
-      const s = await fetchSpace(id);
-      if (active) {
-        setSpace(s);
-        setLoading(false);
-      }
-    })();
-    return () => {
-      active = false;
-    };
-  }, [id]);
-
-  const totalCents = useMemo(
-    () => (space ? space.hourlyPriceCents * hours : 0),
-    [space, hours]
-  );
-
-  const hourOptions = useMemo(() => {
-    if (!space) return [2];
-    const set = new Set<number>();
-    for (const h of BASE_HOURS) {
-      if (h >= space.minHours && h <= space.maxHours) set.add(h);
-    }
-    set.add(space.minHours);
-    set.add(space.maxHours);
-    return Array.from(set).sort((a, b) => a - b);
-  }, [space]);
-
-  useEffect(() => {
-    if (space && !hourOptions.includes(hours)) {
-      setHours(space.minHours);
-    }
-  }, [space, hourOptions, hours]);
 
   const todayAms = useMemo(() => {
     const now = new Date();
@@ -79,6 +66,105 @@ export default function SpaceDetailScreen() {
     return `${y}-${mo}-${da}`;
   }, []);
 
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      const s = await fetchSpace(id);
+      const r = await fetchWeeklyHours(id).catch(() => []);
+      if (active) {
+        setSpace(s);
+        setRules(r);
+        setRulesLoading(false);
+        setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  const monthFirst = `${month.y}-${String(month.m + 1).padStart(2, '0')}-01`;
+  const nextMonthFirst = useMemo(() => {
+    const d = new Date(Date.UTC(month.y, month.m + 1, 1));
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-01`;
+  }, [month]);
+
+  useEffect(() => {
+    if (!space) return;
+    let active = true;
+    (async () => {
+      const fromIso = amsZonedIso(monthFirst, '00:00');
+      const toIso = amsZonedIso(nextMonthFirst, '00:00');
+      const blocked = await fetchBlocked(space.id, fromIso, toIso).catch(() => []);
+      if (active) setBooked(blocked);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [space, monthFirst, nextMonthFirst]);
+
+  const minHours = space?.minHours ?? 0;
+  const maxHours = space?.maxHours ?? 0;
+  const isFixed = space != null && minHours === maxHours;
+
+  const dayInfo = useCallback(
+    (dateStr: string) => {
+      const state = dayState(dateStr, rules, booked, minHours);
+      return { state, past: dateStr < todayAms };
+    },
+    [rules, booked, minHours, todayAms]
+  );
+
+  const selectedFree = useMemo(
+    () => (selectedDate ? freeIntervals(selectedDate, rules, booked) : []),
+    [selectedDate, rules, booked]
+  );
+
+  const fixedWindows = useMemo(() => {
+    if (!isFixed) return [];
+    return selectedFree
+      .filter((iv) => iv.end - iv.start >= minHours * 60)
+      .map((iv) => ({ start: iv.start, end: iv.start + minHours * 60 }));
+  }, [isFixed, selectedFree, minHours]);
+
+  useEffect(() => {
+    if (isFixed && fixedWindows.length === 1) {
+      setStartMin(fixedWindows[0].start);
+      setEndMin(fixedWindows[0].end);
+    }
+  }, [isFixed, fixedWindows]);
+
+  const startOptions = useMemo(
+    () => (selectedDate && minHours > 0 ? availableStartMinutes(selectedFree, minHours) : []),
+    [selectedDate, selectedFree, minHours]
+  );
+
+  const endOptions = useMemo(
+    () =>
+      startMin != null && maxHours > 0
+        ? windowsFromStart(selectedFree, startMin, minHours, maxHours)
+        : [],
+    [selectedFree, startMin, minHours, maxHours]
+  );
+
+  const pickDate = (dateStr: string) => {
+    setSelectedDate(dateStr);
+    setStartMin(null);
+    setEndMin(null);
+    if (!isFixed) setStartMin(availableStartMinutes(freeIntervals(dateStr, rules, booked), minHours)[0] ?? null);
+  };
+
+  const pickStart = (minutes: number) => {
+    setStartMin(minutes);
+    const ends = windowsFromStart(selectedFree, minutes, minHours, maxHours);
+    setEndMin(ends[0] ?? null);
+  };
+
+  const totalCents = useMemo(() => {
+    if (!space || startMin == null || endMin == null) return 0;
+    return Math.round(((endMin - startMin) / 60) * space.hourlyPriceCents);
+  }, [space, startMin, endMin]);
+
   const bookNow = async () => {
     if (!space) return;
     if (!user || !token) {
@@ -88,31 +174,23 @@ export default function SpaceDetailScreen() {
       ]);
       return;
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) {
-      Alert.alert('Pick a time', 'Choose a date and start time.');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(selectedDate) || startMin == null || endMin == null || endMin <= startMin) {
+      Alert.alert('Pick a time', 'Choose an available day and a time slot.');
       return;
     }
-    if (!/^\d{2}:\d{2}$/.test(time) || Number(time.slice(0, 2)) > 23 || Number(time.slice(3)) > 59) {
-      Alert.alert('Invalid time', 'Use a time between 00:00 and 23:59.');
+    const durationHours = (endMin - startMin) / 60;
+    if (durationHours < minHours || durationHours > maxHours) {
+      Alert.alert('Not allowed', `This space books between ${minHours} and ${maxHours} hours.`);
       return;
     }
-    if (date < todayAms) {
-      Alert.alert('Date in the past', 'Pick today or a later date.');
-      return;
-    }
-    if (hours < space.minHours || hours > space.maxHours) {
-      Alert.alert('Not allowed', `This space books between ${space.minHours} and ${space.maxHours} hours.`);
+    const fromIso = amsZonedIso(selectedDate, minutesToHm(startMin));
+    const toIso = amsZonedIso(selectedDate, minutesToHm(endMin));
+    if (selectedDate === todayAms && Date.parse(fromIso) <= Date.now() - 60000) {
+      Alert.alert('Too late', 'Pick a start time in the future.');
       return;
     }
     setBusy(true);
     try {
-      const fromIso = amsZonedIso(date, time);
-      if (date === todayAms && Date.parse(fromIso) <= Date.now() - 60000) {
-        setBusy(false);
-        Alert.alert('Too late', 'Pick a start time in the future.');
-        return;
-      }
-      const toIso = new Date(Date.parse(fromIso) + hours * 3600_000).toISOString();
       const { booking } = await createBooking({
         token,
         spaceId: space.id,
@@ -133,11 +211,12 @@ export default function SpaceDetailScreen() {
       router.replace('/bookings');
     } catch (err) {
       const raw = err instanceof Error ? err.message : 'Booking failed.';
-      const friendly =
-        raw.includes('slot_conflict')
-          ? 'That slot is already taken. Try another time.'
-          : raw.includes('already_paid')
-            ? 'This booking was already paid.'
+      const friendly = raw.includes('slot_conflict')
+        ? 'That slot is already taken. Try another time.'
+        : raw.includes('already_paid')
+          ? 'This booking was already paid.'
+          : raw.includes('shorter_than_min') || raw.includes('longer_than_max')
+            ? `This space books between ${minHours} and ${maxHours} hours.`
             : raw;
       Alert.alert('Booking failed', friendly);
     } finally {
@@ -175,10 +254,7 @@ export default function SpaceDetailScreen() {
       <SimpleScreen>
         <Text style={styles.muted}>This space is not available.</Text>
         <View style={styles.cta}>
-          <Button
-            label="Back to search"
-            onPress={() => router.replace('/search')}
-          />
+          <Button label="Back to search" onPress={() => router.replace('/search')} />
         </View>
       </SimpleScreen>
     );
@@ -209,35 +285,117 @@ export default function SpaceDetailScreen() {
                 <Text style={styles.priceSuffix}>/hr</Text>
               </Text>
               <Text style={styles.meta}>
-                {space.minHours}h min · {space.maxHours}h max
+                {minHours}h min · {maxHours}h max
               </Text>
             </View>
 
             <View style={styles.bookingBox}>
               <Text style={styles.bookingTitle}>Book this space</Text>
-              <View style={styles.row}>
-                <InputLabel label="Date" value={date} onChangeText={setDate} placeholder="2026-09-01" />
-                <InputLabel label="From" value={time} onChangeText={setTime} placeholder="10:00" />
-              </View>
-              <Text style={styles.fieldLabel}>Hours</Text>
-              <View style={styles.hoursRow}>
-                {hourOptions.map((h) => (
-                  <Pressable
-                    key={h}
-                    onPress={() => setHours(h)}
-                    style={[styles.hourChip, hours === h && styles.hourChipActive]}
-                  >
-                    <Text style={[styles.hourChipText, hours === h && styles.hourChipTextActive]}>
-                      {h}h
+
+              <Text style={styles.fieldLabel}>Date</Text>
+              <Pressable style={styles.dateField} onPress={() => setCalendarOpen((v) => !v)}>
+                <Text style={selectedDate ? styles.dateFieldValue : styles.dateFieldPlaceholder}>
+                  {selectedDate ? formatAmsterdam(amsZonedIso(selectedDate, '00:00')) : 'Pick a date'}
+                </Text>
+                <Text style={styles.dateFieldCaret}>{calendarOpen ? '▲' : '▼'}</Text>
+              </Pressable>
+
+              {calendarOpen && (
+                <CalendarPanel
+                  year={month.y}
+                  month={month.m}
+                  onPrev={() => setMonth((m) => (m.m === 0 ? { y: m.y - 1, m: 11 } : { y: m.y, m: m.m - 1 }))}
+                  onNext={() => setMonth((m) => (m.m === 11 ? { y: m.y + 1, m: 0 } : { y: m.y, m: m.m + 1 }))}
+                >
+                  {rulesLoading ? (
+                    <View style={styles.centerPad}>
+                      <ActivityIndicator color={colors.navy800} />
+                    </View>
+                  ) : (
+                    <View>
+                      <CalendarGrid
+                        year={month.y}
+                        month={month.m}
+                        selectedDate={selectedDate}
+                        todayDate={todayAms}
+                        dayInfo={dayInfo}
+                        onSelect={pickDate}
+                      />
+                      <CalendarLegend />
+                    </View>
+                  )}
+                </CalendarPanel>
+              )}
+
+              {selectedDate ? (
+                <View>
+                  <Text style={styles.fieldLabel}>
+                    {isFixed ? 'Available session' : 'Start time'}
+                  </Text>
+
+                  {isFixed ? (
+                    fixedWindows.length === 0 ? (
+                      <Text style={styles.mutedSm}>No free session left on this day.</Text>
+                    ) : (
+                      <View style={styles.chipsRow}>
+                        {fixedWindows.map((w) => (
+                          <Pill
+                            key={w.start}
+                            label={`${minutesToHm(w.start)}–${minutesToHm(w.end)}`}
+                            active={startMin === w.start && endMin === w.end}
+                            onPress={() => {
+                              setStartMin(w.start);
+                              setEndMin(w.end);
+                            }}
+                          />
+                        ))}
+                      </View>
+                    )
+                  ) : (
+                    <View>
+                      {startOptions.length === 0 ? (
+                        <Text style={styles.mutedSm}>No free time left on this day.</Text>
+                      ) : (
+                        <View style={styles.chipsRow}>
+                          {startOptions.map((m) => (
+                            <Pill key={m} label={minutesToHm(m)} active={startMin === m} onPress={() => pickStart(m)} />
+                          ))}
+                        </View>
+                      )}
+                      {startMin != null && endOptions.length > 1 && (
+                        <>
+                          <Text style={styles.fieldLabel}>End time</Text>
+                          <View style={styles.chipsRow}>
+                            {endOptions.map((m) => (
+                              <Pill key={m} label={minutesToHm(m)} active={endMin === m} onPress={() => setEndMin(m)} />
+                            ))}
+                          </View>
+                        </>
+                      )}
+                    </View>
+                  )}
+
+                  {startMin != null && endMin != null && (
+                    <Text style={styles.slotSummary}>
+                      {formatAmsterdam(amsZonedIso(selectedDate, minutesToHm(startMin)))} →{' '}
+                      {minutesToHm(endMin)}
                     </Text>
-                  </Pressable>
-                ))}
-              </View>
+                  )}
+                </View>
+              ) : null}
+
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Total</Text>
-                <Text style={styles.totalValue}>{formatEuro(totalCents)}</Text>
+                <Text style={styles.totalValue}>
+                  {startMin == null || endMin == null ? '—' : formatEuro(totalCents)}
+                </Text>
               </View>
-              <Button label={busy ? 'Booking…' : 'Book now'} onPress={bookNow} loading={busy} disabled={busy} />
+              <Button
+                label={busy ? 'Booking…' : 'Book now'}
+                onPress={bookNow}
+                loading={busy}
+                disabled={busy}
+              />
               {!user && (
                 <Pressable onPress={() => router.push('/login')}>
                   <Text style={styles.loginHint}>Log in to book this space</Text>
@@ -259,33 +417,6 @@ function SimpleScreen({ children }: { children: React.ReactNode }) {
   return (
     <View style={styles.screen}>
       <SafeAreaView style={[styles.safeArea, styles.simpleContent]}>{children}</SafeAreaView>
-    </View>
-  );
-}
-
-function InputLabel({
-  label,
-  value,
-  onChangeText,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChangeText: (t: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <View style={styles.inputField}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        placeholder={placeholder}
-        placeholderTextColor={colors.muted}
-        style={styles.input}
-        keyboardType="numbers-and-punctuation"
-        autoCapitalize="none"
-      />
     </View>
   );
 }
@@ -318,8 +449,6 @@ const styles = StyleSheet.create({
     padding: spacing.s4,
   },
   bookingTitle: { fontSize: 16, fontWeight: '700', color: colors.navy900, marginBottom: spacing.s3 },
-  row: { flexDirection: 'row', gap: spacing.s3 },
-  inputField: { flex: 1 },
   fieldLabel: {
     fontSize: 11,
     fontWeight: '600',
@@ -329,28 +458,28 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     marginTop: spacing.s3,
   },
-  input: {
+  dateField: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     backgroundColor: colors.navy50,
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.navy100,
     paddingHorizontal: spacing.s3,
     paddingVertical: spacing.s2 + 2,
-    fontSize: 14,
-    color: colors.text,
   },
-  hoursRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  hourChip: {
-    borderWidth: 1,
-    borderColor: colors.navy100,
-    backgroundColor: colors.navy50,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+  dateFieldValue: { fontSize: 14, color: colors.text, fontWeight: '600' },
+  dateFieldPlaceholder: { fontSize: 14, color: colors.muted },
+  dateFieldCaret: { fontSize: 11, color: colors.muted },
+  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: spacing.s1 },
+  mutedSm: { fontSize: 13, color: colors.muted, marginTop: spacing.s2 },
+  slotSummary: {
+    fontSize: 13,
+    color: colors.navy700,
+    fontWeight: '600',
+    marginTop: spacing.s3,
   },
-  hourChipActive: { backgroundColor: colors.navy800, borderColor: colors.navy800 },
-  hourChipText: { fontSize: 12, fontWeight: '600', color: colors.navy700 },
-  hourChipTextActive: { color: colors.white },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -366,6 +495,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 13,
   },
+  centerPad: { alignItems: 'center', paddingVertical: spacing.s5 },
   backBtn: {
     position: 'absolute',
     top: 54,
