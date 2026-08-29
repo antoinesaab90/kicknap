@@ -126,7 +126,7 @@ export function BookingCalendar({
               const cls = [
                 "flex h-10 w-10 items-center justify-center rounded-full text-sm transition-colors",
                 interactive
-                  ? "cursor-pointer text-navy-900 hover:bg-gold-100"
+                  ? "cursor-pointer text-black hover:bg-gold-100"
                   : "cursor-not-allowed",
                 info.state === "booked" ? "text-navy-300 line-through" : "",
                 info.state === "closed" ? "text-navy-200" : "",
@@ -153,7 +153,7 @@ export function BookingCalendar({
 
           <div className="mt-3 flex items-center gap-4 border-t border-navy-100 pt-3 text-xs text-navy-600">
             <span className="flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded-full bg-navy-900" />
+              <span className="h-3 w-3 rounded-full bg-black" />
               {legendAvailable}
             </span>
             <span className="flex items-center gap-1.5">
