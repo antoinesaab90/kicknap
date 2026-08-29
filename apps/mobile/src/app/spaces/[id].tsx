@@ -23,7 +23,9 @@ import {
 } from '@/lib/api';
 import {
   availableStartMinutes,
+  computeBreakdown,
   dayState,
+  formatDuration,
   freeIntervals,
   minutesToHm,
   windowsFromStart,
@@ -54,6 +56,7 @@ export default function SpaceDetailScreen() {
   const [startMin, setStartMin] = useState<number | null>(null);
   const [endMin, setEndMin] = useState<number | null>(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const [breakdownOpen, setBreakdownOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
   const todayAms = useMemo(() => {
@@ -151,19 +154,28 @@ export default function SpaceDetailScreen() {
     setSelectedDate(dateStr);
     setStartMin(null);
     setEndMin(null);
+    setBreakdownOpen(false);
     if (!isFixed) setStartMin(availableStartMinutes(freeIntervals(dateStr, rules, booked), minHours)[0] ?? null);
   };
 
   const pickStart = (minutes: number) => {
     setStartMin(minutes);
+    setBreakdownOpen(false);
     const ends = windowsFromStart(selectedFree, minutes, minHours, maxHours);
     setEndMin(ends[0] ?? null);
   };
 
-  const totalCents = useMemo(() => {
-    if (!space || startMin == null || endMin == null) return 0;
-    return Math.round(((endMin - startMin) / 60) * space.hourlyPriceCents);
+  const totalBreakdown = useMemo(() => {
+    if (!space || startMin == null || endMin == null) return null;
+    return computeBreakdown(endMin - startMin, space.hourlyPriceCents);
   }, [space, startMin, endMin]);
+
+  const totalCents = totalBreakdown?.totalCents ?? 0;
+
+  const fixedSessionTotal = useMemo(() => {
+    if (!space || !isFixed) return 0;
+    return computeBreakdown(minHours * 60, space.hourlyPriceCents).totalCents;
+  }, [space, isFixed, minHours]);
 
   const bookNow = async () => {
     if (!space) return;
@@ -280,12 +292,16 @@ export default function SpaceDetailScreen() {
             {space.description ? <Text style={styles.description}>{space.description}</Text> : null}
 
             <View style={styles.priceRow}>
-              <Text style={styles.price}>
-                {formatEuro(space.hourlyPriceCents)}
-                <Text style={styles.priceSuffix}>/hr</Text>
-              </Text>
+              {isFixed ? (
+                <Text style={styles.price}>{formatEuro(fixedSessionTotal)}</Text>
+              ) : (
+                <Text style={styles.price}>
+                  {formatEuro(space.hourlyPriceCents)}
+                  <Text style={styles.priceSuffix}>/hr</Text>
+                </Text>
+              )}
               <Text style={styles.meta}>
-                {minHours}h min · {maxHours}h max
+                {isFixed ? `Fixed ${minHours}h session` : `${minHours}h min · ${maxHours}h max`}
               </Text>
             </View>
 
@@ -378,7 +394,8 @@ export default function SpaceDetailScreen() {
                   {startMin != null && endMin != null && (
                     <Text style={styles.slotSummary}>
                       {formatAmsterdam(amsZonedIso(selectedDate, minutesToHm(startMin)))} →{' '}
-                      {minutesToHm(endMin)}
+                      {minutesToHm(endMin)}{' '}
+                      <Text style={styles.durationTag}>({formatDuration(endMin - startMin)})</Text>
                     </Text>
                   )}
                 </View>
@@ -386,10 +403,36 @@ export default function SpaceDetailScreen() {
 
               <View style={styles.totalRow}>
                 <Text style={styles.totalLabel}>Total</Text>
-                <Text style={styles.totalValue}>
-                  {startMin == null || endMin == null ? '—' : formatEuro(totalCents)}
-                </Text>
+                {startMin == null || endMin == null ? (
+                  <Text style={styles.totalValue}>—</Text>
+                ) : (
+                  <Pressable onPress={() => setBreakdownOpen((v) => !v)}>
+                    <Text style={[styles.totalValue, styles.totalLink]}>{formatEuro(totalCents)} ▾</Text>
+                  </Pressable>
+                )}
               </View>
+
+              {breakdownOpen && totalBreakdown && startMin != null && endMin != null && (
+                <View style={styles.breakdownCard}>
+                  <Text style={styles.breakdownTitle}>Price breakdown</Text>
+                  <View style={styles.breakdownLine}>
+                    <Text style={styles.breakdownLabel}>Rental ({formatDuration(endMin - startMin)})</Text>
+                    <Text style={styles.breakdownValue}>{formatEuro(totalBreakdown.baseCents)}</Text>
+                  </View>
+                  <View style={styles.breakdownLine}>
+                    <Text style={styles.breakdownLabel}>VAT 21% (included)</Text>
+                    <Text style={styles.breakdownValue}>{formatEuro(totalBreakdown.taxCents)}</Text>
+                  </View>
+                  <View style={styles.breakdownLine}>
+                    <Text style={styles.breakdownLabel}>Booking fee 10%</Text>
+                    <Text style={styles.breakdownValue}>{formatEuro(totalBreakdown.feeCents)}</Text>
+                  </View>
+                  <View style={[styles.breakdownLine, styles.breakdownTotalLine]}>
+                    <Text style={styles.breakdownTotalLabel}>Total you pay</Text>
+                    <Text style={styles.breakdownTotalValue}>{formatEuro(totalBreakdown.totalCents)}</Text>
+                  </View>
+                </View>
+              )}
               <Button
                 label={busy ? 'Booking…' : 'Book now'}
                 onPress={bookNow}
@@ -480,6 +523,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: spacing.s3,
   },
+  durationTag: { fontWeight: '800', color: colors.navy900 },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -488,6 +532,39 @@ const styles = StyleSheet.create({
   },
   totalLabel: { fontSize: 14, color: colors.muted, fontWeight: '600' },
   totalValue: { fontSize: 20, fontWeight: '800', color: colors.navy900 },
+  totalLink: { color: colors.gold600, textDecorationLine: 'underline' },
+  breakdownCard: {
+    backgroundColor: colors.navy50,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.navy100,
+    padding: spacing.s3,
+    marginTop: -spacing.s2,
+    marginBottom: spacing.s3,
+  },
+  breakdownTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.muted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: spacing.s2,
+  },
+  breakdownLine: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.s1,
+  },
+  breakdownLabel: { fontSize: 13, color: colors.navy700 },
+  breakdownValue: { fontSize: 13, color: colors.navy700, fontWeight: '600' },
+  breakdownTotalLine: {
+    borderTopWidth: 1,
+    borderTopColor: colors.navy100,
+    marginTop: spacing.s2,
+    paddingTop: spacing.s2,
+  },
+  breakdownTotalLabel: { fontSize: 14, color: colors.navy900, fontWeight: '800' },
+  breakdownTotalValue: { fontSize: 14, color: colors.navy900, fontWeight: '800' },
   loginHint: {
     textAlign: 'center',
     marginTop: spacing.s3,

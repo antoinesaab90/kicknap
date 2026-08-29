@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatEuro, amsterdamOffset, localDateString } from "@/lib/format";
+import { computeBreakdown, formatDuration } from "@/lib/price";
 import type { BookingDto, BookingErrorCode } from "@/lib/types/booking";
 import type { CheckoutResponse } from "@/lib/types/payments";
 
@@ -34,6 +35,12 @@ export interface BookingTexts {
   payNow: string;
   paying: string;
   paymentFailed: string;
+  priceBreakdown: string;
+  breakdownRental: string;
+  breakdownVat: string;
+  breakdownFee: string;
+  breakdownTotal: string;
+  fixedSession: string;
 }
 
 type CheckState =
@@ -74,6 +81,14 @@ export function BookingPanel({
   const [submitting, setSubmitting] = useState(false);
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
+  const [showBreakdown, setShowBreakdown] = useState(false);
+
+  const isFixed = minHours === maxHours;
+  const estimate = isFixed
+    ? computeBreakdown(minHours * 60, hourlyRateCents)
+    : computeBreakdown(hours * 60, hourlyRateCents);
+  const estimateCents = estimate.totalCents;
+  const sessionLabel = isFixed ? texts.fixedSession.replace("{h}", String(minHours)) : null;
 
   const hourOptions = useMemo(() => {
     const from = Math.max(1, Math.round(minHours));
@@ -82,8 +97,6 @@ export function BookingPanel({
     for (let h = from; h <= to; h += 1) options.push(h);
     return options;
   }, [minHours, maxHours]);
-
-  const estimateCents = hourlyRateCents * hours;
 
   function buildRange(): { from: string; to: string } {
     const offset = amsterdamOffset(date);
@@ -248,8 +261,8 @@ export function BookingPanel({
   return (
     <Card>
       <p className="text-sm font-semibold text-navy-600">
-        {formatEuro(hourlyRateCents)}
-        <span className="font-normal">{texts.perHour}</span>
+        {isFixed ? formatEuro(estimateCents) : formatEuro(hourlyRateCents)}
+        <span className="font-normal">{isFixed ? ` ${sessionLabel}` : texts.perHour}</span>
       </p>
 
       <div className="mt-4 grid grid-cols-2 gap-3">
@@ -317,8 +330,53 @@ export function BookingPanel({
 
       <div className="mt-4 flex items-center justify-between border-t border-navy-100 pt-4">
         <span className="text-sm text-navy-600">{texts.total}</span>
-        <span className="text-lg font-semibold text-navy-900">
-          ≈ {formatEuro(estimateCents)}
+        <span className="flex items-center gap-2 text-navy-700">
+          {!isFixed && (
+            <span className="text-xs text-navy-600">
+              ({formatDuration(hours * 60)})
+            </span>
+          )}
+          <span className="relative">
+            <button
+              type="button"
+              onMouseEnter={() => setShowBreakdown(true)}
+              onMouseLeave={() => setShowBreakdown(false)}
+              onClick={() => setShowBreakdown((v) => !v)}
+              className="text-lg font-semibold text-gold-600 underline decoration-dotted underline-offset-4 transition-colors"
+            >
+              ≈ {formatEuro(estimateCents)}
+            </button>
+            {showBreakdown && (
+              <div className="absolute right-0 top-full z-20 mt-2 w-72 rounded-2xl border border-navy-100 bg-white p-4 shadow-xl">
+                <p className="text-xs font-semibold uppercase tracking-wide text-navy-500">
+                  {texts.priceBreakdown}
+                </p>
+                <div className="mt-2 space-y-1 text-sm text-navy-700">
+                  <div className="flex justify-between gap-3">
+                    <span>
+                      {texts.breakdownRental.replace(
+                        "{duration}",
+                        formatDuration(estimate.minutes)
+                      )}
+                    </span>
+                    <span className="font-semibold">{formatEuro(estimate.baseCents)}</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span>{texts.breakdownVat}</span>
+                    <span>{formatEuro(estimate.taxCents)}</span>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <span>{texts.breakdownFee}</span>
+                    <span>{formatEuro(estimate.feeCents)}</span>
+                  </div>
+                  <div className="mt-2 flex justify-between gap-3 border-t border-navy-100 pt-2 font-semibold text-navy-900">
+                    <span>{texts.breakdownTotal}</span>
+                    <span>{formatEuro(estimate.totalCents)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </span>
         </span>
       </div>
 

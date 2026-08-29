@@ -4,6 +4,7 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 import { fetchSpace } from "@/lib/api";
 import { getSession } from "@/lib/auth";
 import { formatEuro } from "@/lib/format";
+import { computeBreakdown } from "@/lib/price";
 import { BookingPanel } from "@/components/booking-panel";
 import type { BookingTexts } from "@/components/booking-panel";
 
@@ -66,7 +67,18 @@ export default async function SpacePage({
     payNow: dict.space.payNow,
     paying: dict.space.paying,
     paymentFailed: dict.space.paymentFailed,
+    priceBreakdown: dict.space.priceBreakdown,
+    breakdownRental: dict.space.breakdownRental,
+    breakdownVat: dict.space.breakdownVat,
+    breakdownFee: dict.space.breakdownFee,
+    breakdownTotal: dict.space.breakdownTotal,
+    fixedSession: dict.space.fixedSession,
   };
+
+  const isFixed = space.minHours === space.maxHours;
+  const fixedSessionCents = isFixed
+    ? computeBreakdown(space.minHours * 60, space.hourlyPriceCents).totalCents
+    : null;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -120,12 +132,18 @@ export default async function SpacePage({
             </div>
             <div className="text-right">
               <p className="text-2xl font-semibold text-navy-900">
-                {formatEuro(space.hourlyPriceCents)}
-                <span className="text-sm font-medium text-navy-600">{dict.space.perHour}</span>
+                {isFixed
+                  ? formatEuro(fixedSessionCents ?? 0)
+                  : formatEuro(space.hourlyPriceCents)}
+                <span className="text-sm font-medium text-navy-600">
+                  {isFixed ? ` ${dict.space.fixedSession.replace("{h}", String(space.minHours))}` : dict.space.perHour}
+                </span>
               </p>
-              <p className="mt-1 text-sm text-navy-600">
-                {dict.space.minStay} {space.minHours}h · {dict.space.maxStay} {space.maxHours}h
-              </p>
+              {!isFixed && (
+                <p className="mt-1 text-sm text-navy-600">
+                  {dict.space.minStay} {space.minHours}h · {dict.space.maxStay} {space.maxHours}h
+                </p>
+              )}
             </div>
           </div>
 

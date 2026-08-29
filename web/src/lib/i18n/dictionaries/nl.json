@@ -172,7 +172,13 @@
     "maxStay": "Max. verblijf",
     "reviews": "beoordeling(en)",
     "notFoundTitle": "Ruimte niet gevonden",
-    "notFoundText": "Deze ruimte bestaat niet of is niet meer beschikbaar."
+    "notFoundText": "Deze ruimte bestaat niet of is niet meer beschikbaar.",
+    "priceBreakdown": "Prijsopbouw",
+    "breakdownRental": "Huur ({duration})",
+    "breakdownVat": "btw 21% (inclusief)",
+    "breakdownFee": "Boekingskosten 10%",
+    "breakdownTotal": "Totaal dat je betaalt",
+    "fixedSession": "Vaste {h}u sessie"
   },
   "host": {
     "loginTitle": "Log in om ruimtes te beheren",

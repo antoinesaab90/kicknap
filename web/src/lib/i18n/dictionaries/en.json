@@ -172,7 +172,13 @@
     "maxStay": "Max stay",
     "reviews": "review(s)",
     "notFoundTitle": "Space not found",
-    "notFoundText": "This space doesn't exist or is no longer available."
+    "notFoundText": "This space doesn't exist or is no longer available.",
+    "priceBreakdown": "Price breakdown",
+    "breakdownRental": "Rental ({duration})",
+    "breakdownVat": "VAT 21% (included)",
+    "breakdownFee": "Booking fee 10%",
+    "breakdownTotal": "Total you pay",
+    "fixedSession": "Fixed {h}h session"
   },
   "host": {
     "loginTitle": "Log in to manage spaces",
