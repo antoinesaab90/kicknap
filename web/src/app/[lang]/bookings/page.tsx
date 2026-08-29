@@ -5,12 +5,18 @@ import { clearSession, getSession } from "@/lib/auth";
 import { identifyUser, fetchSpace, serviceBaseUrl } from "@/lib/api";
 import { formatEuro, formatDateTime } from "@/lib/format";
 import { allInCents } from "@/lib/price";
+import { CancelBookingButton } from "@/components/cancel-booking-button";
 import type { BookingsResponse } from "@/lib/types/booking";
 
-export default async function MyBookingsPage() {
+export default async function MyBookingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ cancelled?: string; cancelError?: string }>;
+}) {
   const currentLang = await lang();
   const dict = await getDictionary();
   const session = await getSession();
+  const { cancelled, cancelError } = await searchParams;
 
   if (!session) {
     return (
@@ -88,6 +94,16 @@ export default async function MyBookingsPage() {
       <h1 className="text-3xl font-semibold tracking-tight text-navy-900">{dict.bookings.title}</h1>
       <p className="mt-2 text-navy-600">{dict.bookings.subtitle}</p>
 
+      {cancelled ? (
+        <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-700">
+          {dict.bookings.cancelSuccess}
+        </div>
+      ) : cancelError ? (
+        <div className="mt-6 rounded-2xl border border-rose-100 bg-rose-50 px-5 py-4 text-sm font-medium text-rose-700">
+          {dict.bookings.cancelError}
+        </div>
+      ) : null}
+
       <div className="mt-8 space-y-4">
         {fetchError ? (
           <div className="rounded-3xl border border-navy-100 bg-navy-50/60 p-10 text-center text-navy-700">
@@ -106,14 +122,18 @@ export default async function MyBookingsPage() {
           </div>
         ) : (
           rows.map(({ booking, spaceName, paymentStatus }) => (
-            <Link
+            <div
               key={booking.id}
-              href={`/${currentLang}/spaces/${booking.spaceId}`}
-              className="block rounded-3xl border border-navy-100 bg-white p-6 transition-colors hover:border-navy-300"
+              className="rounded-3xl border border-navy-100 bg-white p-6 transition-colors hover:border-navy-200"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h2 className="font-semibold text-navy-900">{spaceName}</h2>
+                  <Link
+                    href={`/${currentLang}/spaces/${booking.spaceId}`}
+                    className="font-semibold text-navy-900 transition-colors hover:text-navy-700"
+                  >
+                    {spaceName}
+                  </Link>
                   <p className="mt-1 text-sm text-navy-600">{booking.spaceId}</p>
                   <p className="mt-3 text-sm text-navy-700">
                     {dict.bookings.when}:{" "}
@@ -142,9 +162,17 @@ export default async function MyBookingsPage() {
                       {dict.bookings.statusUnpaid}
                     </span>
                   )}
+                  <div>
+                    <CancelBookingButton
+                      bookingId={booking.id}
+                      lang={currentLang}
+                      label={dict.bookings.cancel}
+                      confirmLabel={dict.bookings.cancelConfirm}
+                    />
+                  </div>
                 </div>
               </div>
-            </Link>
+            </div>
           ))
         )}
       </div>

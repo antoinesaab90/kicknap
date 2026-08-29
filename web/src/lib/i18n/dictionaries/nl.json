@@ -164,6 +164,15 @@
     "minStay": "Min. verblijf",
     "maxStay": "Max. verblijf",
     "reviews": "beoordeling(en)",
+    "reviewsTitle": "Beoordelingen",
+    "reviewsEmpty": "Nog geen beoordelingen.",
+    "leaveReviewTitle": "Beoordeling achterlaten",
+    "reviewRatingLabel": "Jouw beoordeling",
+    "reviewCommentPlaceholder": "Hoe was de ruimte? (optioneel)",
+    "reviewSubmit": "Beoordeling plaatsen",
+    "reviewThanks": "Bedankt \u2014 je beoordeling is geplaatst.",
+    "reviewNotBooked": "Alleen gasten met een bevestigde boeking kunnen deze ruimte beoordelen.",
+    "reviewFailed": "We konden je beoordeling niet plaatsen. Probeer het opnieuw.",
     "notFoundTitle": "Ruimte niet gevonden",
     "notFoundText": "Deze ruimte bestaat niet of is niet meer beschikbaar.",
     "priceBreakdown": "Prijsopbouw",
@@ -253,7 +262,11 @@
     "statusUnpaid": "Betaling vereist",
     "statusFailed": "Betaling mislukt",
     "notLoggedInTitle": "Log in om je boekingen te zien",
-    "fetchError": "We konden je boekingen niet laden. Probeer het over een moment opnieuw."
+    "fetchError": "We konden je boekingen niet laden. Probeer het over een moment opnieuw.",
+    "cancel": "Boeking annuleren",
+    "cancelConfirm": "Deze boeking annuleren? Het tijdslot wordt vrijgemaakt en de betaling terugbetaald.",
+    "cancelSuccess": "Boeking geannuleerd \u2014 het tijdslot is vrijgemaakt.",
+    "cancelError": "We konden deze boeking niet annuleren. Misschien is deze al begonnen."
   },
   "footer": {
     "product": "Product",
@@ -261,6 +274,33 @@
     "helpCenter": "Helpcentrum",
     "contact": "Contact",
     "safety": "Veiligheid",
+    "terms": "Voorwaarden",
+    "privacy": "Privacy",
     "legal": "\u00A9 2026 kicknap \u2014 Learnix \u00B7 KvK 42119992 \u00B7 Amsterdam, Nederland"
+  },
+  "legal": {
+    "termsTitle": "Gebruiksvoorwaarden",
+    "termsUpdated": "Laatst bijgewerkt: 29 augustus 2026",
+    "privacyTitle": "Privacybeleid",
+    "privacyUpdated": "Laatst bijgewerkt: 29 augustus 2026",
+    "terms": [
+      "kicknap is een platform dat gasten en hosts aan elkaar koppelt voor uursegmenten \u2014 korte boekingen van een ruimte tijdens de werkdag.",
+      "Het platform wordt beheerd door Learnix (KvK 42119992), Amsterdam, Nederland.",
+      "Hosts bepalen de prijs die zij ontvangen. Gasten betalen \u00E9\u00E9n totaalbedrag, inclusief 16% servicekosten van kicknap en eventuele andere kosten.",
+      "Een boeking is bevestigd wanneer deze is aangemaakt en de ruimte vrij is. De betaling wordt bij het afrekenen verwerkt via onze betalingsprovider.",
+      "Gasten kunnen een boeking v\u00F3\u00F3r aanvang annuleren. Het tijdslot wordt vrijgemaakt en een betaald bedrag wordt teruggestort. Is de boeking eenmaal begonnen, dan kan deze niet meer worden geannuleerd.",
+      "Hosts ontvangen uitbetalingen voor voltooide, betaalde boekingen. Details tonen we in het host-dashboard.",
+      "kicknap is een vroeg stadium-dienst: beschikbaarheid en boekingen worden 'as-is' geleverd en wij zijn niet aansprakelijk voor zaken buiten onze redelijke invloed.",
+      "Gasten en hosts zijn ieder verantwoordelijk voor rechtmatig gebruik van het platform en van de ruimtes.",
+      "Wij kunnen deze voorwaarden van tijd tot tijd aanpassen. Doorgaand gebruik na wijzigingen betekent dat je deze aanvaardt. Vragen: hello@kicknap.com."
+    ],
+    "privacy": [
+      "We verzamelen alleen wat we nodig hebben: account-e-mail en naam, boekingsgegevens en betaalstatus.",
+      "Dit gebruiken we om boekingen mogelijk te maken, bevestigingen te sturen en je boekingen en inkomsten te tonen.",
+      "Betalingen worden verwerkt via Stripe; wij slaan nooit kaartgegevens op.",
+      "We gebruiken cookies alleen voor inlogsessies.",
+      "Op grond van de AVG kun je je gegevens inzien, corrigeren of laten verwijderen. Mail hello@kicknap.com om een recht uit te oefenen.",
+      "Gegevens worden opgeslagen op infrastructuur in de EU en bewaard zolang je account actief is, plus zolang wettelijk vereist."
+    ]
   }
 }

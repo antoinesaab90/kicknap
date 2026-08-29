@@ -3,7 +3,7 @@
 ## Commands (run from repo root unless noted)
 - `npm run test` — all unit tests, five suites, one command: web (33), services/availability (17), services/bookings (9), services/payments (3), apps/mobile (46) = 108.
 - `npm run check` — architecture lint (depcruise) + web eslint + Next build (26/26 pages).
-- `npm run smoke:prod` — 17 health checks across all five deployed services + web (targets `*-xi.vercel.app` aliases + `www.kicknap.com`).
+- `npm run smoke:prod` — 19 health checks across all five deployed services + web (targets `*-xi.vercel.app` aliases + `www.kicknap.com`).
 - `npm run deploy:prod` — deploys services then web (each via `vercel.cmd --prod`).
 - Per-service deploy (after touching a service): `& "$env:APPDATA\npm\vercel.cmd" -A vercel.json --prod --yes` from that service dir, then `npm run smoke:prod`.
 

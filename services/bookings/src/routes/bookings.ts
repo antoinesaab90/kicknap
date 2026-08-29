@@ -167,6 +167,35 @@ v1.get("/bookings/:id", async (c) => {
   return c.json({ booking });
 });
 
+// POST /api/v1/bookings/:id/cancel { guestEmail }  — cancels a confirmed, not-yet-started
+// booking. The canceller must be the guest who created it OR the hosting space's owner.
+// Cancelled bookings free the slot (they are excluded from active overlap checks).
+v1.post("/bookings/:id/cancel", async (c) => {
+  const id = Number(c.req.param("id"));
+  const body = (await c.req.json().catch(() => null)) as { guestEmail?: unknown } | null;
+  const guestEmail = typeof body?.guestEmail === "string" ? body.guestEmail.trim().toLowerCase() : "";
+  if (!Number.isInteger(id) || id <= 0) return c.json({ error: "invalid_id" }, 400);
+  if (!guestEmail) return c.json({ error: "invalid_guest" }, 400);
+
+  const [booking] = await db.select().from(bookings).where(eq(bookings.id, id)).limit(1);
+  if (!booking) return c.json({ error: "booking_not_found" }, 404);
+  if (booking.status !== ACTIVE_STATUS) return c.json({ error: "booking_not_active" }, 409);
+  if (booking.fromTs.getTime() <= Date.now()) return c.json({ error: "already_started" }, 409);
+
+  const space = await fetchSpace(booking.spaceId);
+  const isGuest = booking.guestEmail?.trim().toLowerCase() === guestEmail;
+  const isHost = space?.hostEmail?.trim().toLowerCase() === guestEmail;
+  if (!isGuest && !isHost) return c.json({ error: "forbidden" }, 403);
+
+  const [updated] = await db
+    .update(bookings)
+    .set({ status: "cancelled" })
+    .where(eq(bookings.id, id))
+    .returning();
+
+  return c.json({ booking: updated });
+});
+
 // GET /api/v1/bookings?spaceId=1&from=...&to=...&guestEmail=...  (active bookings; filter by space, time window, or guest)
 v1.get("/bookings", async (c) => {
   const spaceId = Number(c.req.query("spaceId"));

@@ -70,7 +70,22 @@ export function Footer({ lang, dict }: { lang: string; dict: Dictionary }) {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-navy-100 pt-6 sm:flex-row">
-          <p className="text-xs text-navy-600">{dict.footer.legal}</p>
+          <div className="flex items-center gap-4 text-xs text-navy-600">
+            <p>{dict.footer.legal}</p>
+            <span className="text-navy-300">·</span>
+            <Link
+              href={`/${lang}/legal/terms`}
+              className="transition-colors hover:text-navy-900"
+            >
+              {dict.footer.terms}
+            </Link>
+            <Link
+              href={`/${lang}/legal/privacy`}
+              className="transition-colors hover:text-navy-900"
+            >
+              {dict.footer.privacy}
+            </Link>
+          </div>
           <LanguageSwitcher lang={lang} />
         </div>
       </div>

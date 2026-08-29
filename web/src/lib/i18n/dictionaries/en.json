@@ -164,6 +164,15 @@
     "minStay": "Min stay",
     "maxStay": "Max stay",
     "reviews": "review(s)",
+    "reviewsTitle": "Reviews",
+    "reviewsEmpty": "No reviews yet.",
+    "leaveReviewTitle": "Leave a review",
+    "reviewRatingLabel": "Your rating",
+    "reviewCommentPlaceholder": "How was the space? (optional)",
+    "reviewSubmit": "Submit review",
+    "reviewThanks": "Thanks — your review is live.",
+    "reviewNotBooked": "Only guests with a confirmed booking can review this space.",
+    "reviewFailed": "We couldn't post your review. Try again.",
     "notFoundTitle": "Space not found",
     "notFoundText": "This space doesn't exist or is no longer available.",
     "priceBreakdown": "Price breakdown",
@@ -253,7 +262,11 @@
     "statusUnpaid": "Payment required",
     "statusFailed": "Payment failed",
     "notLoggedInTitle": "Log in to see your bookings",
-    "fetchError": "We couldn't load your bookings. Try again in a moment."
+    "fetchError": "We couldn't load your bookings. Try again in a moment.",
+    "cancel": "Cancel booking",
+    "cancelConfirm": "Cancel this booking? The slot will be freed and the payment refunded.",
+    "cancelSuccess": "Booking cancelled — the slot has been freed.",
+    "cancelError": "We couldn't cancel this booking. It may have already started."
   },
   "footer": {
     "product": "Product",
@@ -261,6 +274,33 @@
     "helpCenter": "Help center",
     "contact": "Contact",
     "safety": "Safety",
+    "terms": "Terms",
+    "privacy": "Privacy",
     "legal": "\u00A9 2026 kicknap \u2014 Learnix \u00B7 KvK 42119992 \u00B7 Amsterdam, Netherlands"
+  },
+  "legal": {
+    "termsTitle": "Terms of Service",
+    "termsUpdated": "Last updated: 29 August 2026",
+    "privacyTitle": "Privacy Policy",
+    "privacyUpdated": "Last updated: 29 August 2026",
+    "terms": [
+      "kicknap is a marketplace that connects guests with hosts for hourly stays \u2014 short bookings of a space during the workday.",
+      "The platform is operated by Learnix (KvK 42119992), Amsterdam, Netherlands.",
+      "Hosts set the price they receive. Guests pay one all-in total, which includes kicknap's 16% service fee and any applicable charges.",
+      "A booking is confirmed when it is created and the space is free. Payment is processed at checkout through our payment provider.",
+      "Guests may cancel a booking before it starts. The slot is freed and any paid amount is refunded. Once a booking has started it can no longer be cancelled.",
+      "Hosts receive payouts for completed, paid bookings. Payout details are shown in the host dashboard.",
+      "kicknap is an early-stage service: availability and bookings are provided as-is, and we are not liable for issues beyond our reasonable control.",
+      "Guests and hosts are each responsible for lawful use of the platform and of the spaces.",
+      "We may update these terms from time to time. Continued use after changes means you accept them. Questions: hello@kicknap.com."
+    ],
+    "privacy": [
+      "We collect only what we need: account email and name, booking details, and payment status.",
+      "We use this to power bookings, send confirmations, and show your bookings and earnings.",
+      "Payments are handled by Stripe; we never store card details.",
+      "We use cookies only for login sessions.",
+      "Under the GDPR you may access, correct, or delete your data. Contact hello@kicknap.com to exercise these rights.",
+      "Data is stored on EU-hosted infrastructure and kept while your account is active, plus as long as legally required."
+    ]
   }
 }

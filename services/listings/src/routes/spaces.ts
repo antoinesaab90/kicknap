@@ -1,14 +1,21 @@
 import { Hono } from "hono";
-import { and, asc, desc, eq, lte } from "drizzle-orm";
+import { and, asc, desc, eq, lte, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
-import { spaces, users } from "../db/schema.js";
-import { db } from "../db/index.js";
+import { spaces, users, reviews } from "../db/schema.js";
+import { db, ensureReviewsTable } from "../db/index.js";
 
 export const AREAS = ["centrum", "oost", "west", "zuid", "noord", "schiphol"] as const;
 
 export type Area = (typeof AREAS)[number];
 
 const v1 = new Hono();
+
+let reviewsEnsured = false;
+async function ensureReviewsReady(): Promise<void> {
+  if (reviewsEnsured) return;
+  await ensureReviewsTable();
+  reviewsEnsured = true;
+}
 
 async function upsertHost(hostEmail: string): Promise<number> {
   const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.email, hostEmail)).limit(1);
@@ -118,6 +125,83 @@ v1.get("/spaces/:id", async (c) => {
   if (!space.published) return c.json({ error: "space_not_found" }, 404);
 
   return c.json({ space });
+});
+
+// GET /api/v1/spaces/:id/reviews — newest first
+v1.get("/spaces/:id/reviews", async (c) => {
+  const id = Number(c.req.param("id"));
+  if (!Number.isInteger(id)) return c.json({ error: "invalid_id" }, 400);
+
+  await ensureReviewsReady();
+
+  const rows = await db
+    .select()
+    .from(reviews)
+    .where(eq(reviews.spaceId, id))
+    .orderBy(desc(reviews.createdAt))
+    .limit(100);
+
+  return c.json({ count: rows.length, reviews: rows });
+});
+
+// POST /api/v1/spaces/:id/reviews { guestEmail, guestName?, rating, comment? }
+// One review per guest per space. Recomputes the space's aggregate rating.
+v1.post("/spaces/:id/reviews", async (c) => {
+  const id = Number(c.req.param("id"));
+  const body = (await c.req.json().catch(() => null)) as {
+    guestEmail?: unknown;
+    guestName?: unknown;
+    rating?: unknown;
+    comment?: unknown;
+  } | null;
+  if (!Number.isInteger(id)) return c.json({ error: "invalid_id" }, 400);
+
+  await ensureReviewsReady();
+
+  const [space] = await db.select({ id: spaces.id, published: spaces.published }).from(spaces).where(eq(spaces.id, id)).limit(1);
+  if (!space || !space.published) return c.json({ error: "space_not_found" }, 404);
+
+  const guestEmail = typeof body?.guestEmail === "string" ? body.guestEmail.trim() : "";
+  const rating = Number(body?.rating);
+  const comment = typeof body?.comment === "string" ? body.comment.trim().slice(0, 2000) : null;
+  if (!guestEmail) return c.json({ error: "invalid_guest" }, 400);
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return c.json({ error: "invalid_rating" }, 400);
+  }
+
+  const guestName =
+    typeof body?.guestName === "string" && body.guestName.trim()
+      ? body.guestName.trim().slice(0, 120)
+      : null;
+
+  const [created] = await db
+    .insert(reviews)
+    .values({
+      spaceId: id,
+      guestEmail,
+      guestName,
+      rating,
+      comment: comment ? comment : null,
+    })
+    .onConflictDoNothing({ target: [reviews.spaceId, reviews.guestEmail] })
+    .returning();
+
+  if (!created) return c.json({ error: "already_reviewed" }, 409);
+
+  const [agg] = await db
+    .select({
+      rating: sql<number>`coalesce(round(avg(${reviews.rating})::numeric, 1)::float, 0)`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(reviews)
+    .where(eq(reviews.spaceId, id));
+
+  await db
+    .update(spaces)
+    .set({ rating: agg.rating, timesRated: agg.count })
+    .where(eq(spaces.id, id));
+
+  return c.json({ review: created }, 201);
 });
 
 // GET /api/v1/internal/host-spaces/:id?hostEmail= — owned space by host (any publish state)

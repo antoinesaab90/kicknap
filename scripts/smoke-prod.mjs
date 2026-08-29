@@ -74,6 +74,23 @@ await check("bookings /list", async () => {
   return `${r.body?.count ?? 0} active`;
 });
 
+await check("bookings cancel needs guest", async () => {
+  const r = await get(`${ENDPOINTS.bookings}/api/v1/bookings/1/cancel`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: "{}",
+  });
+  if (![400, 404].includes(r.status)) throw new Error(`expected 400/404, got ${r.status}`);
+  return "guarded";
+});
+
+await check("listings /spaces/1/reviews", async () => {
+  const r = await get(`${ENDPOINTS.listings}/api/v1/spaces/1/reviews`);
+  expectStatus(200, r.status);
+  if (!Array.isArray(r.body?.reviews)) throw new Error("reviews missing");
+  return `${r.body.reviews.length} reviews`;
+});
+
 await check("identity /health", async () => {
   const r = await get(`${ENDPOINTS.identity}/health`);
   expectStatus(200, r.status);

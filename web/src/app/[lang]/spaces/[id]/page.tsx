@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { lang } from "next/root-params";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { fetchSpace } from "@/lib/api";
+import { fetchSpace, serviceBaseUrl } from "@/lib/api";
 import { getSession } from "@/lib/auth";
 import { formatEuro } from "@/lib/format";
 import { allInHourlyCents, computeBreakdown } from "@/lib/price";
 import { BookingPanel } from "@/components/booking-panel";
+import { ReviewForm } from "@/components/review-form";
 import type { BookingTexts } from "@/components/booking-panel";
 
 export default async function SpacePage({
@@ -82,6 +83,27 @@ export default async function SpacePage({
   const fixedSessionCents = isFixed
     ? computeBreakdown(space.minHours * 60, space.hourlyPriceCents).totalCents
     : null;
+
+  type ReviewDto = {
+    id: number;
+    guestEmail: string;
+    guestName?: string | null;
+    rating: number;
+    comment?: string | null;
+  };
+  let reviews: ReviewDto[] = [];
+  try {
+    const res = await fetch(
+      `${serviceBaseUrl("listings")}/api/v1/spaces/${space.id}/reviews`,
+      { cache: "no-store", signal: AbortSignal.timeout(8000) }
+    );
+    if (res.ok) {
+      const data = (await res.json()) as { reviews?: ReviewDto[] };
+      reviews = data.reviews ?? [];
+    }
+  } catch {
+    reviews = [];
+  }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
@@ -164,6 +186,52 @@ export default async function SpacePage({
             <p className="mt-2 text-navy-700">
               {space.address ?? space.name}, {space.city}
             </p>
+          </section>
+
+          <section className="mt-8 border-t border-navy-100 pt-6">
+            <h2 className="text-lg font-semibold text-navy-900">{dict.space.reviewsTitle}</h2>
+            {reviews.length === 0 ? (
+              <p className="mt-3 text-sm text-navy-600">{dict.space.reviewsEmpty}</p>
+            ) : (
+              <ul className="mt-4 space-y-3">
+                {reviews.map((review) => (
+                  <li
+                    key={review.id}
+                    className="rounded-2xl border border-navy-100 bg-navy-50/40 p-4"
+                  >
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-sm font-semibold text-navy-900">
+                        {review.guestName ?? review.guestEmail}
+                      </p>
+                      <p className="text-sm text-gold-600">{"★".repeat(review.rating)}</p>
+                    </div>
+                    {review.comment && (
+                      <p className="mt-2 text-sm text-navy-700">{review.comment}</p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {session?.token && (
+              <div className="mt-6 max-w-md border-t border-navy-100 pt-5">
+                <h3 className="text-sm font-semibold text-navy-800">
+                  {dict.space.leaveReviewTitle}
+                </h3>
+                <div className="mt-3">
+                  <ReviewForm
+                    spaceId={space.id}
+                    labels={{
+                      ratingLabel: dict.space.reviewRatingLabel,
+                      commentPlaceholder: dict.space.reviewCommentPlaceholder,
+                      submit: dict.space.reviewSubmit,
+                      thanks: dict.space.reviewThanks,
+                      notBooked: dict.space.reviewNotBooked,
+                      failed: dict.space.reviewFailed,
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </section>
         </div>
 

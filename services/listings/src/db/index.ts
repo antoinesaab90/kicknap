@@ -12,5 +12,22 @@ const client = postgres(connectionString, { max: 10, prepare: false });
 
 export const db = drizzle(client, { schema });
 
+export async function ensureReviewsTable(): Promise<void> {
+  await client.unsafe(`
+CREATE TABLE IF NOT EXISTS listings.reviews (
+  id serial PRIMARY KEY,
+  space_id integer NOT NULL REFERENCES listings.spaces(id),
+  guest_email text NOT NULL,
+  guest_name text,
+  rating integer NOT NULL,
+  comment text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS reviews_space_guest_idx ON listings.reviews (space_id, guest_email);
+CREATE INDEX IF NOT EXISTS reviews_space_idx ON listings.reviews (space_id);
+`);
+}
+
 export type Space = typeof schema.spaces.$inferSelect;
 export type NewSpace = typeof schema.spaces.$inferInsert;

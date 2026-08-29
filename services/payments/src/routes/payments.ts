@@ -170,6 +170,45 @@ v1.get("/payments/bookings/:bookingId", async (c) => {
   return c.json({ payment: payment ?? null });
 });
 
+// POST /api/v1/payments/refund { bookingId }
+// Refunds a succeeded payment for a booking (called when a booking is cancelled).
+// Marks the payment row "refunded" once Stripe confirms the refund.
+v1.post("/payments/refund", async (c) => {
+  const body = (await c.req.json().catch(() => null)) as { bookingId?: unknown } | null;
+  const bookingId = Number(body?.bookingId);
+  if (!Number.isInteger(bookingId) || bookingId <= 0) {
+    return c.json({ error: "invalid_bookingId" }, 400);
+  }
+
+  const [row] = await db
+    .select()
+    .from(payments)
+    .where(eq(payments.bookingId, bookingId))
+    .limit(1);
+  if (!row) return c.json({ payment: null, refunded: false, reason: "no_payment" });
+  if (row.status !== "succeeded") {
+    return c.json({ payment: row, refunded: false, reason: "not_succeeded" });
+  }
+  if (!row.stripePaymentIntentId) {
+    return c.json({ payment: row, refunded: false, reason: "no_payment_intent" });
+  }
+
+  const blocked = requireStripe(c);
+  if (blocked) return blocked;
+
+  try {
+    const { getStripe } = await import("../lib/stripe.js");
+    await getStripe().refunds.create({ payment_intent: row.stripePaymentIntentId });
+    await db
+      .update(payments)
+      .set({ status: "refunded", updatedAt: new Date() })
+      .where(eq(payments.id, row.id));
+    return c.json({ payment: { ...row, status: "refunded" }, refunded: true });
+  } catch {
+    return c.json({ error: "stripe_error" }, 500);
+  }
+});
+
 // GET /api/v1/payments/by-bookings?ids=1,2,3  (server-to-server: payment rows for a set of bookings)
 v1.get("/payments/by-bookings", async (c) => {
   const ids = String(c.req.query("ids") ?? "")

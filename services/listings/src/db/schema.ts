@@ -1,4 +1,4 @@
-import { pgSchema, boolean, doublePrecision, index, integer, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { pgSchema, boolean, doublePrecision, index, integer, serial, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
 const ls = pgSchema("listings");
 
@@ -37,5 +37,24 @@ export const spaces = ls.table(
     index("listings_spaces_neighborhood_idx").on(table.neighborhood),
     index("listings_spaces_price_idx").on(table.hourlyPriceCents),
     index("listings_spaces_city_idx").on(table.city),
+  ]
+);
+
+export const reviews = ls.table(
+  "reviews",
+  {
+    id: serial("id").primaryKey(),
+    spaceId: integer("space_id")
+      .notNull()
+      .references(() => spaces.id),
+    guestEmail: text("guest_email").notNull(),
+    guestName: text("guest_name"),
+    rating: integer("rating").notNull(),
+    comment: text("comment"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("reviews_space_guest_idx").on(table.spaceId, table.guestEmail),
+    index("reviews_space_idx").on(table.spaceId),
   ]
 );

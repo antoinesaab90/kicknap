@@ -41,6 +41,19 @@ CREATE TABLE IF NOT EXISTS listings.spaces (
 CREATE INDEX IF NOT EXISTS listings_spaces_neighborhood_idx ON listings.spaces (neighborhood);
 CREATE INDEX IF NOT EXISTS listings_spaces_price_idx ON listings.spaces (hourly_price_cents);
 CREATE INDEX IF NOT EXISTS listings_spaces_city_idx ON listings.spaces (city);
+
+CREATE TABLE IF NOT EXISTS listings.reviews (
+  id serial PRIMARY KEY,
+  space_id integer NOT NULL REFERENCES listings.spaces(id),
+  guest_email text NOT NULL,
+  guest_name text,
+  rating integer NOT NULL,
+  comment text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS reviews_space_guest_idx ON listings.reviews (space_id, guest_email);
+CREATE INDEX IF NOT EXISTS reviews_space_idx ON listings.reviews (space_id);
 `;
 
 await client.unsafe(SQL);
