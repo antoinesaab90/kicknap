@@ -263,10 +263,13 @@
     "statusFailed": "Payment failed",
     "notLoggedInTitle": "Log in to see your bookings",
     "fetchError": "We couldn't load your bookings. Try again in a moment.",
+"reference": "Booking ref",
     "cancel": "Cancel booking",
-    "cancelConfirm": "Cancel this booking? The slot will be freed and the payment refunded.",
-    "cancelSuccess": "Booking cancelled — the slot has been freed.",
-    "cancelError": "We couldn't cancel this booking. It may have already started."
+    "cancelConfirm": "Cancel this booking? The slot will be freed and you'll be refunded in full.",
+    "cancelSuccess": "Booking cancelled \u2014 the slot has been freed and your payment is refunded in full.",
+    "cancelRef": "Cancellation ref",
+    "cancelLocked": "Free cancellation ended 24h before start \u2014 this booking can no longer be cancelled.",
+    "cancelError": "We couldn't cancel this booking. It may have already started, or free cancellation may have ended."
   },
   "footer": {
     "product": "Product",
@@ -288,7 +291,7 @@
       "The platform is operated by Learnix (KvK 42119992), Amsterdam, Netherlands.",
       "Hosts set the price they receive. Guests pay one all-in total, which includes kicknap's 16% service fee and any applicable charges.",
       "A booking is confirmed when it is created and the space is free. Payment is processed at checkout through our payment provider.",
-      "Guests may cancel a booking before it starts. The slot is freed and any paid amount is refunded. Once a booking has started it can no longer be cancelled.",
+      "Guests can cancel a booking for free up to 24 hours before it starts and receive the full paid amount back \u2014 kicknap does not keep its service fee on cancellations. Within 24 hours of the start time cancellations are no longer possible, and once a booking has started it can no longer be cancelled.",
       "Hosts receive payouts for completed, paid bookings. Payout details are shown in the host dashboard.",
       "kicknap is an early-stage service: availability and bookings are provided as-is, and we are not liable for issues beyond our reasonable control.",
       "Guests and hosts are each responsible for lawful use of the platform and of the spaces.",

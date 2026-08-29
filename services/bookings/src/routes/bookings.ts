@@ -4,8 +4,18 @@ import { bookings } from "../db/schema.js";
 import { db } from "../db/index.js";
 import { fetchSpace } from "../lib/listings.js";
 import { checkAvailability } from "../lib/availability.js";
-import { computePriceCents } from "../lib/price.js";
-import { notifyBookingCreated } from "../lib/mail.js";
+import { computePriceCents, guestTotalCents } from "../lib/price.js";
+import {
+  notifyBookingCreated,
+  notifyBookingCancelled,
+  notifyRefunded,
+} from "../lib/mail.js";
+import {
+  CANCELLATION_DEADLINE_HOURS,
+  bookingReference,
+  cancellationReference,
+  guestCanCancel,
+} from "../lib/policy.js";
 
 const v1 = new Hono();
 
@@ -114,10 +124,12 @@ v1.post("/bookings", async (c) => {
 
   const [booking] = await db.insert(bookings).values(row).returning();
 
+  const reference = bookingReference(booking.id);
   void notifyBookingCreated({
     guestEmail: body.guestEmail ?? "",
     guestName: body.guestName,
     hostEmail: space.hostEmail ?? undefined,
+    reference,
     spaceName: space.name,
     neighborhood: space.neighborhood,
     city: space.city ?? "Amsterdam",
@@ -130,6 +142,7 @@ v1.post("/bookings", async (c) => {
     {
       booking: {
         ...booking,
+        reference,
         from: new Date(fromMs).toISOString(),
         to: new Date(toMs).toISOString(),
       },
@@ -167,9 +180,49 @@ v1.get("/bookings/:id", async (c) => {
   return c.json({ booking });
 });
 
+// Requests a full refund for the booking from the payments service. Best-effort:
+// the cancellation stands regardless, and the caller decides what to do with the result.
+async function requestRefund(bookingId: number): Promise<{
+  refunded: boolean;
+  reason?: string;
+  refundId?: string;
+  amountCents?: number;
+}> {
+  const paymentsUrl = process.env.SERVICE_PAYMENTS_URL ?? "http://localhost:3004";
+  try {
+    const res = await fetch(`${paymentsUrl}/api/v1/payments/refund`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ bookingId }),
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return { refunded: false, reason: `http_${res.status}` };
+    const data = (await res.json()) as {
+      refunded?: boolean;
+      reason?: string;
+      refundId?: string;
+      payment?: { amountCents?: number } | null;
+    };
+    if (!data.refunded) return { refunded: false, reason: data.reason ?? "not_refunded" };
+    return {
+      refunded: true,
+      reason: data.reason,
+      refundId: data.refundId,
+      amountCents: data.payment?.amountCents,
+    };
+  } catch {
+    return { refunded: false, reason: "error" };
+  }
+}
+
 // POST /api/v1/bookings/:id/cancel { guestEmail }  — cancels a confirmed, not-yet-started
 // booking. The canceller must be the guest who created it OR the hosting space's owner.
-// Cancelled bookings free the slot (they are excluded from active overlap checks).
+// This endpoint is the single source of truth for the cancellation policy:
+//   - Guests may cancel free of charge up to 24h before start (full refund, fee not kept).
+//     Within the last 24h cancellation is no longer possible.
+//   - Hosts may cancel at any time before start; the guest gets a full refund.
+//   - Refunds and cancellation/refund emails are triggered from here, so the policy,
+//     the money movement and the notifications can never drift apart.
 v1.post("/bookings/:id/cancel", async (c) => {
   const id = Number(c.req.param("id"));
   const body = (await c.req.json().catch(() => null)) as { guestEmail?: unknown } | null;
@@ -187,13 +240,56 @@ v1.post("/bookings/:id/cancel", async (c) => {
   const isHost = space?.hostEmail?.trim().toLowerCase() === guestEmail;
   if (!isGuest && !isHost) return c.json({ error: "forbidden" }, 403);
 
+  const nowMs = Date.now();
+  const startMs = booking.fromTs.getTime();
+  if (isGuest && !guestCanCancel(startMs, nowMs)) {
+    return c.json(
+      { error: "cancellation_deadline_passed", hours: CANCELLATION_DEADLINE_HOURS },
+      409
+    );
+  }
+
+  const cancellationRef = cancellationReference(id, nowMs);
   const [updated] = await db
     .update(bookings)
     .set({ status: "cancelled" })
     .where(eq(bookings.id, id))
     .returning();
 
-  return c.json({ booking: updated });
+  // Guests who reached this point are inside the free-cancel window; host
+  // cancellations are refundable by definition. Both refund in full — no penalty
+  // exists, so there is no partial-refund math to keep consistent. The attempt is
+  // best-effort: if a booking was never paid there is simply nothing to refund.
+  const refund = await requestRefund(id);
+
+  const common = {
+    guestEmail: booking.guestEmail ?? guestEmail,
+    guestName: booking.guestName ?? undefined,
+    hostEmail: space?.hostEmail ?? undefined,
+    spaceName: space?.name ?? `#${booking.spaceId}`,
+    neighborhood: space?.neighborhood ?? "",
+    city: space?.city ?? "Amsterdam",
+    fromIso: booking.fromTs.toISOString(),
+    toIso: booking.toTs.toISOString(),
+    reference: bookingReference(id),
+    cancellationReference: cancellationRef,
+  };
+
+  void notifyBookingCancelled({ ...common, refunded: refund.refunded });
+
+  if (refund.refunded) {
+    void notifyRefunded({
+      ...common,
+      amountCents: refund.amountCents ?? guestTotalCents(booking.priceCents),
+      refundId: refund.refundId,
+    });
+  }
+
+  return c.json({
+    booking: updated,
+    cancellationReference: cancellationRef,
+    refund: { refunded: refund.refunded, reason: refund.reason, refundId: refund.refundId },
+  });
 });
 
 // GET /api/v1/bookings?spaceId=1&from=...&to=...&guestEmail=...  (active bookings; filter by space, time window, or guest)

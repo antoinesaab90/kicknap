@@ -41,7 +41,14 @@ export async function POST(
     );
   }
 
-  return NextResponse.redirect(new URL(`/${lang}/bookings?cancelled=1`, request.url), {
+  const payload = (await res.json().catch(() => null)) as {
+    cancellationReference?: string;
+  } | null;
+  const ref = payload?.cancellationReference
+    ? `&ref=${encodeURIComponent(payload.cancellationReference)}`
+    : "";
+
+  return NextResponse.redirect(new URL(`/${lang}/bookings?cancelled=1${ref}`, request.url), {
     status: 303,
   });
 }

@@ -8,15 +8,21 @@ import { allInCents } from "@/lib/price";
 import { CancelBookingButton } from "@/components/cancel-booking-button";
 import type { BookingsResponse } from "@/lib/types/booking";
 
+const CANCELLATION_WINDOW_MS = 24 * 60 * 60 * 1000;
+
 export default async function MyBookingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cancelled?: string; cancelError?: string }>;
+  searchParams: Promise<{ cancelled?: string; cancelError?: string; ref?: string }>;
 }) {
   const currentLang = await lang();
   const dict = await getDictionary();
   const session = await getSession();
-  const { cancelled, cancelError } = await searchParams;
+  const { cancelled, cancelError, ref } = await searchParams;
+
+  // Server component: renders once per request, so a per-request time snapshot is stable.
+  // eslint-disable-next-line react-hooks/purity
+  const nowMs = Date.now();
 
   if (!session) {
     return (
@@ -97,6 +103,12 @@ export default async function MyBookingsPage({
       {cancelled ? (
         <div className="mt-6 rounded-2xl border border-emerald-100 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-700">
           {dict.bookings.cancelSuccess}
+          {ref ? (
+            <span className="mt-1 block text-xs font-semibold text-emerald-600">
+              {dict.bookings.cancelRef}:{" "}
+              <span className="font-mono">{ref}</span>
+            </span>
+          ) : null}
         </div>
       ) : cancelError ? (
         <div className="mt-6 rounded-2xl border border-rose-100 bg-rose-50 px-5 py-4 text-sm font-medium text-rose-700">
@@ -121,7 +133,11 @@ export default async function MyBookingsPage({
             </Link>
           </div>
         ) : (
-          rows.map(({ booking, spaceName, paymentStatus }) => (
+          rows.map(({ booking, spaceName, paymentStatus }) => {
+            const startMs = Date.parse(String(booking.from ?? booking.fromTs));
+            const inFuture = Number.isFinite(startMs) && startMs > nowMs;
+            const cancellable = inFuture && startMs - nowMs > CANCELLATION_WINDOW_MS;
+            return (
             <div
               key={booking.id}
               className="rounded-3xl border border-navy-100 bg-white p-6 transition-colors hover:border-navy-200"
@@ -144,6 +160,12 @@ export default async function MyBookingsPage({
                   <p className="mt-1 text-sm text-navy-700">
                     {dict.bookings.duration}: {booking.durationMinutes / 60}h
                   </p>
+                  <p className="mt-2 text-xs text-navy-600">
+                    {dict.bookings.reference}:{" "}
+                    <span className="font-mono font-semibold text-navy-800">
+                      KN-{String(booking.id).padStart(6, "0")}
+                    </span>
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-semibold text-navy-900">
@@ -163,18 +185,24 @@ export default async function MyBookingsPage({
                     </span>
                   )}
                   <div>
-                    <CancelBookingButton
-                      bookingId={booking.id}
-                      lang={currentLang}
-                      label={dict.bookings.cancel}
-                      confirmLabel={dict.bookings.cancelConfirm}
-                    />
+                    {cancellable ? (
+                      <CancelBookingButton
+                        bookingId={booking.id}
+                        lang={currentLang}
+                        label={dict.bookings.cancel}
+                        confirmLabel={dict.bookings.cancelConfirm}
+                      />
+                    ) : inFuture ? (
+                      <p className="mt-3 max-w-[16rem] text-right text-[11px] font-medium leading-tight text-navy-500">
+                        {dict.bookings.cancelLocked}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               </div>
             </div>
-          ))
-        )}
+          );
+          }))}
       </div>
     </div>
   );

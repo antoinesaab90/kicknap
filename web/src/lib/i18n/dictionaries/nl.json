@@ -263,10 +263,13 @@
     "statusFailed": "Betaling mislukt",
     "notLoggedInTitle": "Log in om je boekingen te zien",
     "fetchError": "We konden je boekingen niet laden. Probeer het over een moment opnieuw.",
+    "reference": "Boeking ref",
     "cancel": "Boeking annuleren",
-    "cancelConfirm": "Deze boeking annuleren? Het tijdslot wordt vrijgemaakt en de betaling terugbetaald.",
-    "cancelSuccess": "Boeking geannuleerd \u2014 het tijdslot is vrijgemaakt.",
-    "cancelError": "We konden deze boeking niet annuleren. Misschien is deze al begonnen."
+    "cancelConfirm": "Deze boeking annuleren? Het tijdslot wordt vrijgemaakt en je krijgt het volledige bedrag terug.",
+    "cancelSuccess": "Boeking geannuleerd \u2014 het tijdslot is vrijgemaakt en je betaling wordt volledig terugbetaald.",
+    "cancelRef": "Annuleringsref",
+    "cancelLocked": "De gratis annulering is 24 uur voor aanvang ge\u00EBindigd \u2014 deze boeking kan niet meer worden geannuleerd.",
+    "cancelError": "We konden deze boeking niet annuleren. Misschien is deze al begonnen of is de gratis annuleringsperiode verstreken."
   },
   "footer": {
     "product": "Product",
@@ -288,7 +291,7 @@
       "Het platform wordt beheerd door Learnix (KvK 42119992), Amsterdam, Nederland.",
       "Hosts bepalen de prijs die zij ontvangen. Gasten betalen \u00E9\u00E9n totaalbedrag, inclusief 16% servicekosten van kicknap en eventuele andere kosten.",
       "Een boeking is bevestigd wanneer deze is aangemaakt en de ruimte vrij is. De betaling wordt bij het afrekenen verwerkt via onze betalingsprovider.",
-      "Gasten kunnen een boeking v\u00F3\u00F3r aanvang annuleren. Het tijdslot wordt vrijgemaakt en een betaald bedrag wordt teruggestort. Is de boeking eenmaal begonnen, dan kan deze niet meer worden geannuleerd.",
+      "Gasten kunnen een boeking tot 24 uur voor aanvang kosteloos annuleren en ontvangen het volledig betaalde bedrag terug \u2014 kicknap houdt bij annulering geen servicekosten in. Binnen 24 uur voor aanvang is annuleren niet meer mogelijk en kan een begonnen boeking niet meer worden geannuleerd.",
       "Hosts ontvangen uitbetalingen voor voltooide, betaalde boekingen. Details tonen we in het host-dashboard.",
       "kicknap is een vroeg stadium-dienst: beschikbaarheid en boekingen worden 'as-is' geleverd en wij zijn niet aansprakelijk voor zaken buiten onze redelijke invloed.",
       "Gasten en hosts zijn ieder verantwoordelijk voor rechtmatig gebruik van het platform en van de ruimtes.",

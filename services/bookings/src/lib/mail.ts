@@ -101,6 +101,7 @@ export interface BookingMailData {
   guestEmail: string;
   guestName?: string;
   hostEmail?: string;
+  reference?: string;
   spaceName: string;
   neighborhood: string;
   city: string;
@@ -120,6 +121,7 @@ export function renderBookingConfirmation(data: BookingMailData): { subject: str
     infoRow("Space", `${escapeHtml(data.spaceName)} · ${escapeHtml(data.neighborhood)}, ${escapeHtml(data.city)}`),
     infoRow("Check-in", formatLocalTime(data.fromIso)),
     infoRow("Check-out", formatLocalTime(data.toIso)),
+    ...(data.reference ? [infoRow("Booking ref", escapeHtml(data.reference))] : []),
     infoRow("Total", formatEuro(guestTotalCents(data.priceCents))),
     `</table>`,
     `<p style="margin-top:24px;">Show this confirmation at check-in. Enjoy the quiet.</p>`
@@ -138,12 +140,96 @@ export function renderHostNewBooking(data: BookingMailData): { subject: string; 
     infoRow("Check-in", formatLocalTime(data.fromIso)),
     infoRow("Check-out", formatLocalTime(data.toIso)),
     infoRow("Guest", data.guestName ? escapeHtml(data.guestName) : "—"),
+    ...(data.reference ? [infoRow("Booking ref", escapeHtml(data.reference))] : []),
     `</table>`,
     `<p style="margin-top:24px;">No check-in fuss — the guest booked your listed hours and pays online.</p>`
   ];
   return {
     subject: `You have a new booking: ${data.spaceName}`,
     html: layout("Someone booked your space", lines.join("\n")),
+  };
+}
+
+export interface CancellationMailData {
+  guestEmail: string;
+  guestName?: string;
+  hostEmail?: string;
+  spaceName: string;
+  neighborhood: string;
+  city: string;
+  fromIso: string;
+  toIso: string;
+  reference: string;
+  cancellationReference: string;
+  refunded: boolean;
+}
+
+export function renderCancellationConfirmation(
+  data: CancellationMailData
+): { subject: string; html: string } {
+  const refundNote = data.refunded
+    ? `<p style="margin:18px 0 0;">Your payment is being <strong>refunded in full</strong> — kicknap does not keep its service fee on cancellations.</p>`
+    : `<p style="margin:18px 0 0;">No payment was made, so there is nothing to refund.</p>`;
+  const lines: string[] = [
+    `<p>Your booking for <strong>${escapeHtml(data.spaceName)}</strong> has been cancelled.</p>`,
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0;">`,
+    infoRow("Space", `${escapeHtml(data.spaceName)} · ${escapeHtml(data.neighborhood)}, ${escapeHtml(data.city)}`),
+    infoRow("Check-in", formatLocalTime(data.fromIso)),
+    infoRow("Check-out", formatLocalTime(data.toIso)),
+    infoRow("Booking ref", escapeHtml(data.reference)),
+    infoRow("Cancellation ref", escapeHtml(data.cancellationReference)),
+    `</table>`,
+    refundNote,
+  ];
+  return {
+    subject: `Booking cancelled: ${data.spaceName}`,
+    html: layout("We've cancelled your booking", lines.join("\n")),
+  };
+}
+
+export function renderHostBookingCancelled(
+  data: CancellationMailData
+): { subject: string; html: string } {
+  const lines: string[] = [
+    `<p>A booking for <strong>${escapeHtml(data.spaceName)}</strong> was cancelled.</p>`,
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0;">`,
+    infoRow("Space", `${escapeHtml(data.spaceName)} · ${escapeHtml(data.neighborhood)}, ${escapeHtml(data.city)}`),
+    infoRow("Check-in", formatLocalTime(data.fromIso)),
+    infoRow("Check-out", formatLocalTime(data.toIso)),
+    infoRow("Booking ref", escapeHtml(data.reference)),
+    infoRow("Cancellation ref", escapeHtml(data.cancellationReference)),
+    `</table>`,
+    `<p style="margin-top:24px;">The slot is free again and can be booked by someone else.</p>`
+  ];
+  return {
+    subject: `Booking cancelled: ${data.spaceName}`,
+    html: layout("A booking was cancelled", lines.join("\n")),
+  };
+}
+
+export interface RefundMailData {
+  guestEmail: string;
+  guestName?: string;
+  reference: string;
+  cancellationReference: string;
+  refundId?: string;
+  amountCents: number;
+}
+
+export function renderRefundConfirmation(
+  data: RefundMailData
+): { subject: string; html: string } {
+  const lines: string[] = [
+    `<p>Your payment for booking <strong>${escapeHtml(data.reference)}</strong> (cancelled as <strong>${escapeHtml(data.cancellationReference)}</strong>) has been refunded in full.</p>`,
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:18px 0;">`,
+    infoRow("Refunded", formatEuro(data.amountCents)),
+    ...(data.refundId ? [infoRow("Refund ref", escapeHtml(data.refundId))] : []),
+    `</table>`,
+    `<p style="margin-top:24px;">Money generally reappears on your card within a few business days (this depends on your bank, not on us).</p>`
+  ];
+  return {
+    subject: `Refund sent: ${data.reference}`,
+    html: layout("Your refund", lines.join("\n")),
   };
 }
 
@@ -162,4 +248,27 @@ export async function notifyBookingCreated(data: BookingMailData): Promise<void>
       await sendMail({ to: job.to as string, subject: mail.subject, html: mail.html });
     })
   );
+}
+
+export async function notifyBookingCancelled(data: CancellationMailData): Promise<void> {
+  const jobs: Array<{ to?: string; render: () => { subject: string; html: string } }> = [];
+  if (data.guestEmail) {
+    jobs.push({ to: data.guestEmail, render: () => renderCancellationConfirmation(data) });
+  }
+  if (data.hostEmail) {
+    jobs.push({ to: data.hostEmail, render: () => renderHostBookingCancelled(data) });
+  }
+  await Promise.all(
+    jobs.map(async (job) => {
+      if (!job.to) return;
+      const mail = job.render();
+      await sendMail({ to: job.to as string, subject: mail.subject, html: mail.html });
+    })
+  );
+}
+
+export async function notifyRefunded(data: RefundMailData): Promise<void> {
+  if (!data.guestEmail) return;
+  const mail = renderRefundConfirmation(data);
+  await sendMail({ to: data.guestEmail, subject: mail.subject, html: mail.html });
 }

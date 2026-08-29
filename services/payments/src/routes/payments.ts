@@ -198,12 +198,18 @@ v1.post("/payments/refund", async (c) => {
 
   try {
     const { getStripe } = await import("../lib/stripe.js");
-    await getStripe().refunds.create({ payment_intent: row.stripePaymentIntentId });
+    const refund = await getStripe().refunds.create({
+      payment_intent: row.stripePaymentIntentId,
+    });
     await db
       .update(payments)
       .set({ status: "refunded", updatedAt: new Date() })
       .where(eq(payments.id, row.id));
-    return c.json({ payment: { ...row, status: "refunded" }, refunded: true });
+    return c.json({
+      payment: { ...row, status: "refunded" },
+      refunded: true,
+      refundId: refund.id,
+    });
   } catch {
     return c.json({ error: "stripe_error" }, 500);
   }
