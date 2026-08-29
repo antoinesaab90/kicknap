@@ -190,7 +190,10 @@ export function HeroSearch({
     }`;
   const cellLabel =
     "block text-[11px] font-semibold uppercase tracking-wide text-navy-400";
-  const cellValue = "mt-0.5 block truncate text-sm font-medium text-navy-900";
+  const cellValue = (placeholder: boolean) =>
+    `mt-0.5 block truncate text-sm font-medium ${
+      placeholder ? "text-navy-400" : "text-navy-900"
+    }`;
 
   const firstWeekday = new Date(Date.UTC(month.y, month.m, 1)).getUTCDay();
   const daysInMonth = new Date(Date.UTC(month.y, month.m + 1, 0)).getUTCDate();
@@ -216,7 +219,7 @@ export function HeroSearch({
         <div className={`${cellClass(open === "where")} sm:border-r sm:border-navy-100`}>
           <button type="button" onClick={() => toggle("where")} className="block w-full text-left" aria-expanded={open === "where"}>
             <span className={cellLabel}>{texts.whereLabel}</span>
-            <span className={cellValue}>{location?.label ?? texts.whereValue}</span>
+            <span className={cellValue(!location)}>{location?.label ?? texts.whereValue}</span>
           </button>
         </div>
 
@@ -224,7 +227,7 @@ export function HeroSearch({
         <div className={`${cellClass(open === "when")} sm:border-r sm:border-navy-100`}>
           <button type="button" onClick={() => toggle("when")} className="block w-full text-left" aria-expanded={open === "when"}>
             <span className={cellLabel}>{texts.whenLabel}</span>
-            <span className={cellValue}>{dateLabel}</span>
+            <span className={cellValue(!date)}>{dateLabel}</span>
           </button>
         </div>
 
@@ -232,7 +235,7 @@ export function HeroSearch({
         <div className={cellClass(open === "who")}>
           <button type="button" onClick={() => toggle("who")} className="block w-full text-left" aria-expanded={open === "who"}>
             <span className={cellLabel}>{texts.whoLabel}</span>
-            <span className={cellValue}>{whoValue}</span>
+            <span className={cellValue(adults === 1 && children === 0 && pets === 0)}>{whoValue}</span>
           </button>
         </div>
 
