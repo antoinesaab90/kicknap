@@ -11,7 +11,15 @@ export function SearchView({
   lang,
 }: {
   spaces: SpaceDto[];
-  texts: { perHour: string; minHours: string; demoNote: string; map: string; list: string };
+  texts: {
+    perHour: string;
+    minHours: string;
+    demoNote: string;
+    map: string;
+    list: string;
+    save: string;
+    saved: string;
+  };
   lang: string;
 }) {
   const [selectedId, setSelectedId] = useState<number | null>(null);

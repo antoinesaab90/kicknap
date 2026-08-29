@@ -37,6 +37,8 @@ export default async function HomePage() {
     perHour: dict.search.perHour,
     minHours: dict.search.minHours,
     demoNote: dict.search.demoNote,
+    save: dict.cart.save,
+    saved: dict.cart.saved,
   };
 
   return (

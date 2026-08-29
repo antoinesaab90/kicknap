@@ -8,10 +8,24 @@
     "spaces": "Spaces",
     "howItWorks": "Hoe het werkt",
     "login": "Inloggen",
-    "listYourSpace": "Verhuur je ruimte",
+    "listYourSpace": "Plaats je ruimte",
     "myBookings": "Mijn boekingen",
     "hostDashboard": "Host",
-    "signOut": "Uitloggen"
+    "signOut": "Uitloggen",
+    "saved": "Bewaard"
+  },
+  "cart": {
+    "title": "Je bewaarde ruimtes",
+    "subtitle": "Bewaard terwijl je vergelijkt \u2014 boeken en betalen gebeurt per ruimte, dus kies er \u00E9\u00E9n wanneer je er klaar voor bent.",
+    "empty": "Nog niets bewaard",
+    "emptyText": "Tik op Opslaan bij een ruimte om hem hier te bewaren terwijl je rondkijkt.",
+    "browse": "Ruimtes bekijken",
+    "remove": "Verwijder",
+    "clearAll": "Alles wissen",
+    "viewBook": "Bekijk & boek",
+    "unavailable": "Niet meer beschikbaar",
+    "save": "Opslaan",
+    "saved": "Opgeslagen"
   },
   "hero": {
     "eyebrow": "Noem het thuis.",

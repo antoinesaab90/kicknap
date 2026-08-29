@@ -5,6 +5,8 @@ import { locales } from "@/lib/i18n/config";
 import { hasLocale, getDictionaryForLocale } from "@/lib/i18n/dictionaries";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
+import { CartProvider } from "@/components/cart-context";
+import { SavedBubble } from "@/components/cart-bubble";
 import "../globals.css";
 
 const inter = Inter({
@@ -77,9 +79,12 @@ export default async function LangLayout({
   return (
     <html lang={lang} className={`${inter.variable} scroll-smooth`}>
       <body className="min-h-screen font-sans">
-        <Header lang={lang} dict={dict} />
-        <main className="flex-1">{children}</main>
-        <Footer lang={lang} dict={dict} />
+        <CartProvider>
+          <Header lang={lang} dict={dict} />
+          <main className="flex-1">{children}</main>
+          <Footer lang={lang} dict={dict} />
+          <SavedBubble lang={lang} />
+        </CartProvider>
       </body>
     </html>
   );

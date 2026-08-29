@@ -11,7 +11,21 @@
     "listYourSpace": "List your space",
     "myBookings": "My bookings",
     "hostDashboard": "Host",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "saved": "Saved"
+  },
+  "cart": {
+    "title": "Your saved spaces",
+    "subtitle": "Kept while you compare — booking and payment happen per space, so pick one when you're ready.",
+    "empty": "Nothing saved yet",
+    "emptyText": "Tap Save on any space to keep it here while you look around.",
+    "browse": "Browse spaces",
+    "remove": "Remove",
+    "clearAll": "Clear all",
+    "viewBook": "View & book",
+    "unavailable": "No longer available",
+    "save": "Save",
+    "saved": "Saved"
   },
   "hero": {
     "eyebrow": "Call it home.",

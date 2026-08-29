@@ -112,6 +112,8 @@ export default async function SearchPage({
     demoNote: dict.search.demoNote,
     map: dict.search.map,
     list: dict.search.list,
+    save: dict.cart.save,
+    saved: dict.cart.saved,
   };
 
   const pillLink = (url: string, label: string, active: boolean) => (

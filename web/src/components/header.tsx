@@ -26,6 +26,12 @@ export async function Header({ lang, dict }: { lang: string; dict: Dictionary })
             {dict.nav.spaces}
           </Link>
           <Link
+            href={`/${lang}/cart`}
+            className="text-sm font-medium text-navy-600 transition-colors hover:text-navy-800"
+          >
+            {dict.nav.saved}
+          </Link>
+          <Link
             href={`/${lang}#how-it-works`}
             className="text-sm font-medium text-navy-600 transition-colors hover:text-navy-800"
           >

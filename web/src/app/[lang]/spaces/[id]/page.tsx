@@ -7,6 +7,7 @@ import { formatEuro } from "@/lib/format";
 import { allInHourlyCents, computeBreakdown } from "@/lib/price";
 import { BookingPanel } from "@/components/booking-panel";
 import { ReviewForm } from "@/components/review-form";
+import { CartToggle } from "@/components/cart-toggle";
 import type { BookingTexts } from "@/components/booking-panel";
 
 export default async function SpacePage({
@@ -154,6 +155,12 @@ export default async function SpacePage({
                   </span>
                 </p>
               )}
+              <div className="mt-3">
+                <CartToggle
+                  spaceId={space.id}
+                  texts={{ save: dict.cart.save, saved: dict.cart.saved }}
+                />
+              </div>
             </div>
             <div className="text-right">
               <p className="text-2xl font-semibold text-navy-900">
