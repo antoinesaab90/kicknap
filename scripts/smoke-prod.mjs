@@ -114,7 +114,7 @@ await check("web /en/search", async () => {
 await check("web /en/spaces/21", async () => {
   const r = await get(`${ENDPOINTS.web}/en/spaces/21`);
   expectStatus(200, r.status);
-  if (!r.body.includes("Check availability")) throw new Error("booking panel missing");
+  if (!r.body.includes("Pick a day above to see its available times.")) throw new Error("booking panel missing");
   return "detail page ok";
 });
 
